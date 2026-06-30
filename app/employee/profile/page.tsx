@@ -141,6 +141,32 @@ export default function EmployeeProfilePage() {
   const [docPayslip, setDocPayslip] = useState<string | null>(null);
   const [docTax, setDocTax] = useState<string | null>(null);
 
+  // Dynamically calculate profile completion percentage
+  const getProfileCompletion = () => {
+    let total = 0;
+    if (avatarImage) total += 10;
+    const personalFields = [
+      personalInfo.name, personalInfo.fatherName, personalInfo.motherName, 
+      personalInfo.presentAddress, personalInfo.permanentAddress, personalInfo.dob, 
+      personalInfo.phone, personalInfo.email, personalInfo.nationality, 
+      personalInfo.religion, personalInfo.sex, personalInfo.bloodType, personalInfo.nid
+    ];
+    const filledPersonal = personalFields.filter(Boolean).length;
+    total += Math.round((filledPersonal / personalFields.length) * 40);
+    if (educationSSC.institution) total += 8;
+    if (educationHSC.institution || educationDiploma.institution) total += 8;
+    if (educationGraduate.institution) total += 9;
+    if (docResume) total += 5;
+    if (docNidEmpFront) total += 5;
+    if (docNidEmpBack) total += 5;
+    if (docNidNomFront) total += 2.5;
+    if (docNidNomBack) total += 2.5;
+    if (docCovid) total += 5;
+    return Math.min(100, Math.round(total));
+  };
+
+  const completionPercent = getProfileCompletion();
+
   const ratingConfig = getRatingConfig(mockEmployee.performance.overallScore);
 
   // SVG Progress Stroke computation
@@ -290,7 +316,21 @@ export default function EmployeeProfilePage() {
             </div>
           </div>
 
-          <div className="border-t border-slate-100 mt-5 pt-4 flex items-center justify-between">
+          {/* Profile Completion Progress Bar */}
+          <div className="mt-4 pt-3.5 border-t border-slate-100">
+            <div className="flex justify-between items-center text-[10px] mb-1">
+              <span className="text-slate-500 font-bold uppercase tracking-wider">Profile Completion</span>
+              <span className="text-red-650 font-extrabold">{completionPercent}%</span>
+            </div>
+            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-red-500 to-rose-600 h-full rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${completionPercent}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 mt-4 pt-4 flex items-center justify-between">
             {/* Score Display */}
             <div className="flex items-center gap-3">
               <div className="relative w-16 h-16">
