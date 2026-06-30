@@ -34,46 +34,80 @@ const mockEmployee = {
 };
 
 // ── Mock Attendance Data ──────────────────────────────────────────────────
-type DayStatus = "present" | "late" | "absent" | "sick" | "weekend";
-interface AttendanceDay {
-  date: number;
-  status: DayStatus;
-  arrive?: string;
-  leave?: string;
-}
-const MONTH_LABEL = "June 2025";
-const MONTH_START_DOW = 0; // 0 = Sunday
-const mockCalendar: AttendanceDay[] = [
-  { date: 1, status: "weekend" },
-  { date: 2, status: "present", arrive: "09:02", leave: "17:05" },
-  { date: 3, status: "present", arrive: "09:00", leave: "17:00" },
-  { date: 4, status: "late",    arrive: "10:15", leave: "17:00" },
-  { date: 5, status: "present", arrive: "08:55", leave: "17:10" },
-  { date: 6, status: "present", arrive: "09:01", leave: "17:02" },
-  { date: 7, status: "absent" },
-  { date: 8, status: "weekend" },
-  { date: 9, status: "present", arrive: "09:00", leave: "17:00" },
-  { date: 10, status: "sick" },
-  { date: 11, status: "sick" },
-  { date: 12, status: "present", arrive: "09:03", leave: "17:00" },
-  { date: 13, status: "late",    arrive: "09:45", leave: "17:00" },
-  { date: 14, status: "present", arrive: "09:00", leave: "16:50" },
-  { date: 15, status: "weekend" },
-  { date: 16, status: "present", arrive: "09:00", leave: "17:00" },
-  { date: 17, status: "present", arrive: "08:58", leave: "17:05" },
-  { date: 18, status: "present", arrive: "09:02", leave: "17:00" },
-  { date: 19, status: "late",    arrive: "10:00", leave: "17:00" },
-  { date: 20, status: "absent" },
-  { date: 21, status: "present", arrive: "09:00", leave: "17:00" },
-  { date: 22, status: "weekend" },
-  { date: 23, status: "present", arrive: "09:01", leave: "17:00" },
-  { date: 24, status: "present", arrive: "09:00", leave: "17:00" },
-  { date: 25, status: "present", arrive: "08:57", leave: "17:02" },
-  { date: 26, status: "present", arrive: "09:00", leave: "17:00" },
-  { date: 27, status: "present", arrive: "09:00", leave: "17:00" },
-  { date: 28, status: "present", arrive: "09:00", leave: "17:00" },
-  { date: 29, status: "weekend" },
-  { date: 30, status: "present", arrive: "09:00", leave: "17:00" },
+const attendanceMonths = [
+  {
+    label: "May 2025",
+    startDow: 4, // May 2025 starts on a Thursday
+    days: [
+      { date: 1, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 2, status: "present", arrive: "08:58", leave: "17:02" },
+      { date: 3, status: "weekend" },
+      { date: 4, status: "weekend" },
+      { date: 5, status: "present", arrive: "08:50", leave: "17:00" },
+      { date: 6, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 7, status: "late",    arrive: "09:30", leave: "17:00" },
+      { date: 8, status: "present", arrive: "08:55", leave: "17:05" },
+      { date: 9, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 10, status: "weekend" },
+      { date: 11, status: "weekend" },
+      { date: 12, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 13, status: "present", arrive: "08:59", leave: "17:01" },
+      { date: 14, status: "sick" },
+      { date: 15, status: "present", arrive: "09:02", leave: "17:00" },
+      { date: 16, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 17, status: "weekend" },
+      { date: 18, status: "weekend" },
+      { date: 19, status: "present", arrive: "08:55", leave: "17:00" },
+      { date: 20, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 21, status: "late",    arrive: "09:40", leave: "17:00" },
+      { date: 22, status: "present", arrive: "08:50", leave: "17:10" },
+      { date: 23, status: "present", arrive: "08:55", leave: "17:00" },
+      { date: 24, status: "weekend" },
+      { date: 25, status: "weekend" },
+      { date: 26, status: "present", arrive: "09:01", leave: "17:00" },
+      { date: 27, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 28, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 29, status: "absent" },
+      { date: 30, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 31, status: "weekend" }
+    ]
+  },
+  {
+    label: "June 2025",
+    startDow: 0, // June 2025 starts on a Sunday
+    days: [
+      { date: 1, status: "weekend" },
+      { date: 2, status: "present", arrive: "09:02", leave: "17:05" },
+      { date: 3, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 4, status: "late",    arrive: "10:15", leave: "17:00" },
+      { date: 5, status: "present", arrive: "08:55", leave: "17:10" },
+      { date: 6, status: "present", arrive: "09:01", leave: "17:02" },
+      { date: 7, status: "absent" },
+      { date: 8, status: "weekend" },
+      { date: 9, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 10, status: "sick" },
+      { date: 11, status: "sick" },
+      { date: 12, status: "present", arrive: "09:03", leave: "17:00" },
+      { date: 13, status: "late",    arrive: "09:45", leave: "17:00" },
+      { date: 14, status: "present", arrive: "09:00", leave: "16:50" },
+      { date: 15, status: "weekend" },
+      { date: 16, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 17, status: "present", arrive: "08:58", leave: "17:05" },
+      { date: 18, status: "present", arrive: "09:02", leave: "17:00" },
+      { date: 19, status: "late",    arrive: "10:00", leave: "17:00" },
+      { date: 20, status: "absent" },
+      { date: 21, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 22, status: "weekend" },
+      { date: 23, status: "present", arrive: "09:01", leave: "17:00" },
+      { date: 24, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 25, status: "present", arrive: "08:57", leave: "17:02" },
+      { date: 26, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 27, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 28, status: "present", arrive: "09:00", leave: "17:00" },
+      { date: 29, status: "weekend" },
+      { date: 30, status: "present", arrive: "09:00", leave: "17:00" }
+    ]
+  }
 ];
 const mockBarData = [
   { day: "M", arrive: 9.0,  leave: 17.1 },
@@ -105,6 +139,8 @@ export default function EmployeeProfilePage() {
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [attendanceFilter, setAttendanceFilter] = useState<"week" | "month" | "year">("month");
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraMode, setCameraMode] = useState<"arrive" | "leave">("arrive");
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(1);
   const [todayArrived, setTodayArrived] = useState(false);
   const [todayLeft, setTodayLeft] = useState(false);
   
@@ -1171,7 +1207,7 @@ export default function EmployeeProfilePage() {
               </button>
               <h2 className="text-base font-bold text-slate-900" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>Attendance</h2>
             </div>
-            <span className="text-[11px] font-bold text-slate-400">{MONTH_LABEL}</span>
+            <span className="text-[11px] font-bold text-slate-400">{attendanceMonths[selectedMonthIndex].label}</span>
           </header>
 
           <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 pb-8">
@@ -1213,7 +1249,7 @@ export default function EmployeeProfilePage() {
               {!cameraActive ? (
                 <div className="grid grid-cols-2 gap-3">
                   <button
-                    onClick={() => { setCameraActive(true); }}
+                    onClick={() => { setCameraMode("arrive"); setCameraActive(true); }}
                     disabled={todayArrived}
                     className={`flex flex-col items-center gap-1.5 py-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${todayArrived ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-red-600 text-white hover:bg-red-700 shadow-sm"}`}
                   >
@@ -1224,7 +1260,7 @@ export default function EmployeeProfilePage() {
                     {todayArrived ? "Arrived ✓" : "Take Arrive Selfie"}
                   </button>
                   <button
-                    onClick={() => { setCameraActive(true); }}
+                    onClick={() => { setCameraMode("leave"); setCameraActive(true); }}
                     disabled={!todayArrived || todayLeft}
                     className={`flex flex-col items-center gap-1.5 py-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${!todayArrived || todayLeft ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-slate-800 text-white hover:bg-slate-900 shadow-sm"}`}
                   >
@@ -1266,7 +1302,14 @@ export default function EmployeeProfilePage() {
                       Cancel
                     </button>
                     <button
-                      onClick={() => { setTodayArrived(true); setCameraActive(false); }}
+                      onClick={() => {
+                        if (cameraMode === "arrive") {
+                          setTodayArrived(true);
+                        } else {
+                          setTodayLeft(true);
+                        }
+                        setCameraActive(false);
+                      }}
                       className="col-span-2 py-2 rounded-xl bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" fill="currentColor" /></svg>
@@ -1293,30 +1336,74 @@ export default function EmployeeProfilePage() {
               ))}
             </div>
 
-            {/* ── Streak Badge ───────────────────────────────────────── */}
-            <div className="bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
-              <span className="text-2xl">🔥</span>
-              <div>
-                <div className="text-xs font-extrabold text-white">5-Day Attendance Streak!</div>
-                <div className="text-[10px] text-orange-100">Keep it up — you&apos;re on a roll this week.</div>
+            {/* ── Duty & Roster Alerts ────────────────────────────────── */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
+              <div className="flex items-center gap-2 text-slate-800">
+                <span className="text-base">📢</span>
+                <h3 className="text-xs font-extrabold uppercase tracking-wider">Duty & Roster Alerts</h3>
+              </div>
+              <div className="space-y-2">
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-left">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-bold text-red-600 uppercase">Weekly Shift Roster</span>
+                    <span className="text-[9px] text-slate-400">2h ago</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-normal font-medium">Your work roster for next week (July 1 - July 7) is now published. Check your shift schedules under the Roster Tab.</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-left">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-bold text-slate-700 uppercase">System Alert</span>
+                    <span className="text-[9px] text-slate-400">5h ago</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-normal font-medium">Remember to take and submit your "Leave Selfie" when completing your shift to verify your departure time.</p>
+                </div>
               </div>
             </div>
 
             {/* ── Monthly Calendar ───────────────────────────────────── */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-              <h3 className="text-xs font-extrabold text-slate-800 mb-3 uppercase tracking-wider">{MONTH_LABEL} Calendar</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Attendance Calendar</h3>
+                
+                {/* Month Selector Controls */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSelectedMonthIndex(0)}
+                    disabled={selectedMonthIndex === 0}
+                    className={`p-1 rounded-lg hover:bg-slate-50 transition-all ${selectedMonthIndex === 0 ? "opacity-35 cursor-not-allowed" : "text-slate-600"}`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                  <span className="text-[11px] font-bold text-slate-700 w-20 text-center">
+                    {attendanceMonths[selectedMonthIndex].label}
+                  </span>
+                  <button
+                    onClick={() => setSelectedMonthIndex(1)}
+                    disabled={selectedMonthIndex === 1}
+                    className={`p-1 rounded-lg hover:bg-slate-50 transition-all ${selectedMonthIndex === 1 ? "opacity-35 cursor-not-allowed" : "text-slate-600"}`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
               {/* Day headers */}
               <div className="grid grid-cols-7 mb-1">
                 {["S","M","T","W","T","F","S"].map((d, i) => (
                   <div key={i} className="text-center text-[9px] font-bold text-slate-400">{d}</div>
                 ))}
               </div>
+              
               {/* Days grid with leading blanks */}
               <div className="grid grid-cols-7 gap-y-1">
-                {Array.from({ length: MONTH_START_DOW }).map((_, i) => (
+                {Array.from({ length: attendanceMonths[selectedMonthIndex].startDow }).map((_, i) => (
                   <div key={`blank-${i}`} />
                 ))}
-                {mockCalendar.map((d) => (
+                {attendanceMonths[selectedMonthIndex].days.map((d) => (
                   <div key={d.date} className="flex flex-col items-center gap-0.5 py-0.5">
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold
                       ${d.status === "weekend" ? "text-slate-300" : "text-white"}
@@ -1331,7 +1418,7 @@ export default function EmployeeProfilePage() {
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 pt-3 border-t border-slate-50">
                 {[
                   { label: "Present",  dot: "bg-emerald-500" },
-                  { label: "Late",     dot: "bg-amber-400" },
+                  { label: "Late / Early Leave", dot: "bg-amber-400" },
                   { label: "Absent",   dot: "bg-red-400" },
                   { label: "Sick",     dot: "bg-blue-400" },
                 ].map((l) => (
