@@ -1,5 +1,7 @@
 # Transcom LMS Web
 
+[![Development Status](https://img.shields.io/badge/status-active-success.svg)](#)
+
 Next.js frontend application for the Transcom Learning Management System (LMS), built using TypeScript, Tailwind CSS, and the Next.js App Router.
 
 ## Prerequisites
