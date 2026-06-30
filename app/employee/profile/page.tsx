@@ -152,6 +152,7 @@ export default function EmployeeProfilePage() {
   
   // Modal Picture Editing States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [tempScale, setTempScale] = useState<number>(1);
   const [tempX, setTempX] = useState<number>(0);
@@ -344,6 +345,23 @@ export default function EmployeeProfilePage() {
           <h1 className="text-lg font-bold text-slate-900" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>My Skill Profile</h1>
         </div>
         <div className="flex items-center gap-2">
+          {/* QR Code Button */}
+          <button
+            onClick={() => setIsQrModalOpen(true)}
+            className="relative p-2 hover:bg-red-50 rounded-full text-slate-600 hover:text-red-600 transition-all"
+            title="Show My QR Code"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="3" height="3"/>
+              <rect x="19" y="14" width="2" height="2"/>
+              <rect x="14" y="19" width="2" height="2"/>
+              <rect x="18" y="18" width="3" height="3"/>
+            </svg>
+          </button>
+          {/* Notification Bell */}
           <button className="relative p-2 hover:bg-slate-50 rounded-full text-slate-600 transition-all">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -1194,6 +1212,114 @@ export default function EmployeeProfilePage() {
 
       {/* ╔══════════════════════════════════════════════════════╗ */}
       {/* ║            ATTENDANCE MODAL / FULL CARD             ║ */}
+
+      {/* ╔══════════════════════════════════════════════════════╗ */}
+      {/* ║              QR CODE MODAL                          ║ */}
+      {/* ╚══════════════════════════════════════════════════════╝ */}
+      {isQrModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setIsQrModalOpen(false)}>
+          <div className="bg-white w-full max-w-sm rounded-t-3xl p-6 pb-10 shadow-2xl flex flex-col items-center gap-5 animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
+            {/* Drag handle */}
+            <div className="w-10 h-1 bg-slate-200 rounded-full"></div>
+            <div className="text-center">
+              <h3 className="text-base font-extrabold text-slate-900" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>Assessment QR Code</h3>
+              <p className="text-[11px] text-slate-400 mt-1">Show this QR to the showroom assessor to begin your skill evaluation.</p>
+            </div>
+            {/* QR Code visual (SVG pattern) */}
+            <div className="bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm">
+              <svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Top-left finder pattern */}
+                <rect x="8" y="8" width="44" height="44" rx="4" fill="#1e293b"/>
+                <rect x="14" y="14" width="32" height="32" rx="2" fill="white"/>
+                <rect x="20" y="20" width="20" height="20" rx="1" fill="#1e293b"/>
+                {/* Top-right finder pattern */}
+                <rect x="108" y="8" width="44" height="44" rx="4" fill="#1e293b"/>
+                <rect x="114" y="14" width="32" height="32" rx="2" fill="white"/>
+                <rect x="120" y="20" width="20" height="20" rx="1" fill="#1e293b"/>
+                {/* Bottom-left finder pattern */}
+                <rect x="8" y="108" width="44" height="44" rx="4" fill="#1e293b"/>
+                <rect x="14" y="114" width="32" height="32" rx="2" fill="white"/>
+                <rect x="20" y="120" width="20" height="20" rx="1" fill="#1e293b"/>
+                {/* Data modules (mock pattern) */}
+                <rect x="60" y="8" width="6" height="6" fill="#1e293b"/>
+                <rect x="72" y="8" width="6" height="6" fill="#1e293b"/>
+                <rect x="84" y="8" width="6" height="6" fill="#1e293b"/>
+                <rect x="96" y="8" width="6" height="6" fill="#1e293b"/>
+                <rect x="60" y="20" width="6" height="6" fill="#1e293b"/>
+                <rect x="84" y="20" width="6" height="6" fill="#1e293b"/>
+                <rect x="96" y="20" width="6" height="6" fill="#1e293b"/>
+                <rect x="60" y="32" width="6" height="6" fill="#1e293b"/>
+                <rect x="72" y="32" width="6" height="6" fill="#1e293b"/>
+                <rect x="60" y="44" width="6" height="6" fill="#1e293b"/>
+                <rect x="84" y="44" width="6" height="6" fill="#1e293b"/>
+                <rect x="96" y="44" width="6" height="6" fill="#1e293b"/>
+                <rect x="8" y="60" width="6" height="6" fill="#1e293b"/>
+                <rect x="20" y="60" width="6" height="6" fill="#1e293b"/>
+                <rect x="44" y="60" width="6" height="6" fill="#1e293b"/>
+                <rect x="60" y="60" width="6" height="6" fill="#1e293b"/>
+                <rect x="72" y="60" width="6" height="6" fill="#1e293b"/>
+                <rect x="96" y="60" width="6" height="6" fill="#1e293b"/>
+                <rect x="108" y="60" width="6" height="6" fill="#1e293b"/>
+                <rect x="132" y="60" width="6" height="6" fill="#1e293b"/>
+                <rect x="8" y="72" width="6" height="6" fill="#1e293b"/>
+                <rect x="32" y="72" width="6" height="6" fill="#1e293b"/>
+                <rect x="44" y="72" width="6" height="6" fill="#1e293b"/>
+                <rect x="60" y="72" width="6" height="6" fill="#1e293b"/>
+                <rect x="84" y="72" width="6" height="6" fill="#1e293b"/>
+                <rect x="108" y="72" width="6" height="6" fill="#1e293b"/>
+                <rect x="120" y="72" width="6" height="6" fill="#1e293b"/>
+                <rect x="144" y="72" width="6" height="6" fill="#1e293b"/>
+                <rect x="8" y="84" width="6" height="6" fill="#1e293b"/>
+                <rect x="20" y="84" width="6" height="6" fill="#1e293b"/>
+                <rect x="44" y="84" width="6" height="6" fill="#1e293b"/>
+                <rect x="72" y="84" width="6" height="6" fill="#1e293b"/>
+                <rect x="96" y="84" width="6" height="6" fill="#1e293b"/>
+                <rect x="120" y="84" width="6" height="6" fill="#1e293b"/>
+                <rect x="132" y="84" width="6" height="6" fill="#1e293b"/>
+                <rect x="8" y="96" width="6" height="6" fill="#1e293b"/>
+                <rect x="32" y="96" width="6" height="6" fill="#1e293b"/>
+                <rect x="60" y="96" width="6" height="6" fill="#1e293b"/>
+                <rect x="84" y="96" width="6" height="6" fill="#1e293b"/>
+                <rect x="108" y="96" width="6" height="6" fill="#1e293b"/>
+                <rect x="144" y="96" width="6" height="6" fill="#1e293b"/>
+                <rect x="60" y="108" width="6" height="6" fill="#1e293b"/>
+                <rect x="72" y="108" width="6" height="6" fill="#1e293b"/>
+                <rect x="84" y="108" width="6" height="6" fill="#1e293b"/>
+                <rect x="96" y="108" width="6" height="6" fill="#1e293b"/>
+                <rect x="120" y="108" width="6" height="6" fill="#1e293b"/>
+                <rect x="144" y="108" width="6" height="6" fill="#1e293b"/>
+                <rect x="60" y="120" width="6" height="6" fill="#1e293b"/>
+                <rect x="84" y="120" width="6" height="6" fill="#1e293b"/>
+                <rect x="108" y="120" width="6" height="6" fill="#1e293b"/>
+                <rect x="132" y="120" width="6" height="6" fill="#1e293b"/>
+                <rect x="60" y="132" width="6" height="6" fill="#1e293b"/>
+                <rect x="72" y="132" width="6" height="6" fill="#1e293b"/>
+                <rect x="96" y="132" width="6" height="6" fill="#1e293b"/>
+                <rect x="120" y="132" width="6" height="6" fill="#1e293b"/>
+                <rect x="144" y="132" width="6" height="6" fill="#1e293b"/>
+                <rect x="60" y="144" width="6" height="6" fill="#1e293b"/>
+                <rect x="84" y="144" width="6" height="6" fill="#1e293b"/>
+                <rect x="108" y="144" width="6" height="6" fill="#1e293b"/>
+                <rect x="132" y="144" width="6" height="6" fill="#1e293b"/>
+              </svg>
+            </div>
+            {/* Employee info under QR */}
+            <div className="text-center space-y-0.5">
+              <p className="text-sm font-extrabold text-slate-900">{personalInfo.name}</p>
+              <p className="text-[11px] font-semibold text-red-600">{mockEmployee.designation}</p>
+              <p className="text-[10px] text-slate-400 font-medium">ID: {mockEmployee.id}</p>
+            </div>
+            <button
+              onClick={() => setIsQrModalOpen(false)}
+              className="w-full py-3 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold hover:bg-slate-200 transition-all cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+
       {/* ╚══════════════════════════════════════════════════════╝ */}
       {isAttendanceOpen && (
         <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-hidden animate-fade-in">
