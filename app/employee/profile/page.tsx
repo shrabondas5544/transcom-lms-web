@@ -33,6 +33,65 @@ const mockEmployee = {
   ]
 };
 
+// ── Mock Attendance Data ──────────────────────────────────────────────────
+type DayStatus = "present" | "late" | "absent" | "sick" | "weekend";
+interface AttendanceDay {
+  date: number;
+  status: DayStatus;
+  arrive?: string;
+  leave?: string;
+}
+const MONTH_LABEL = "June 2025";
+const MONTH_START_DOW = 0; // 0 = Sunday
+const mockCalendar: AttendanceDay[] = [
+  { date: 1, status: "weekend" },
+  { date: 2, status: "present", arrive: "09:02", leave: "17:05" },
+  { date: 3, status: "present", arrive: "09:00", leave: "17:00" },
+  { date: 4, status: "late",    arrive: "10:15", leave: "17:00" },
+  { date: 5, status: "present", arrive: "08:55", leave: "17:10" },
+  { date: 6, status: "present", arrive: "09:01", leave: "17:02" },
+  { date: 7, status: "absent" },
+  { date: 8, status: "weekend" },
+  { date: 9, status: "present", arrive: "09:00", leave: "17:00" },
+  { date: 10, status: "sick" },
+  { date: 11, status: "sick" },
+  { date: 12, status: "present", arrive: "09:03", leave: "17:00" },
+  { date: 13, status: "late",    arrive: "09:45", leave: "17:00" },
+  { date: 14, status: "present", arrive: "09:00", leave: "16:50" },
+  { date: 15, status: "weekend" },
+  { date: 16, status: "present", arrive: "09:00", leave: "17:00" },
+  { date: 17, status: "present", arrive: "08:58", leave: "17:05" },
+  { date: 18, status: "present", arrive: "09:02", leave: "17:00" },
+  { date: 19, status: "late",    arrive: "10:00", leave: "17:00" },
+  { date: 20, status: "absent" },
+  { date: 21, status: "present", arrive: "09:00", leave: "17:00" },
+  { date: 22, status: "weekend" },
+  { date: 23, status: "present", arrive: "09:01", leave: "17:00" },
+  { date: 24, status: "present", arrive: "09:00", leave: "17:00" },
+  { date: 25, status: "present", arrive: "08:57", leave: "17:02" },
+  { date: 26, status: "present", arrive: "09:00", leave: "17:00" },
+  { date: 27, status: "present", arrive: "09:00", leave: "17:00" },
+  { date: 28, status: "present", arrive: "09:00", leave: "17:00" },
+  { date: 29, status: "weekend" },
+  { date: 30, status: "present", arrive: "09:00", leave: "17:00" },
+];
+const mockBarData = [
+  { day: "M", arrive: 9.0,  leave: 17.1 },
+  { day: "T", arrive: 10.25,leave: 17.0 },
+  { day: "W", arrive: 9.05, leave: 17.0 },
+  { day: "T", arrive: 9.75, leave: 17.0 },
+  { day: "F", arrive: 8.97, leave: 16.83 },
+];
+const WORK_START = 9.0;
+const WORK_END   = 17.0;
+const dayStatusColor: Record<DayStatus, string> = {
+  present: "bg-emerald-500",
+  late:    "bg-amber-400",
+  absent:  "bg-red-400",
+  sick:    "bg-blue-400",
+  weekend: "bg-slate-100 text-slate-300",
+};
+
 function getRatingConfig(score: number) {
   if (score >= 9.0) return { label: "Best", bg: "bg-emerald-50 text-emerald-700 border-emerald-200", color: "#10b981" };
   if (score >= 7.5) return { label: "Good", bg: "bg-rose-50 text-rose-700 border-rose-200", color: "#dc2626" };
@@ -43,6 +102,11 @@ function getRatingConfig(score: number) {
 
 export default function EmployeeProfilePage() {
   const [activeTab, setActiveTab] = useState<"profileInfo" | "documents" | "education" | "skill">("profileInfo");
+  const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
+  const [attendanceFilter, setAttendanceFilter] = useState<"week" | "month" | "year">("month");
+  const [cameraActive, setCameraActive] = useState(false);
+  const [todayArrived, setTodayArrived] = useState(false);
+  const [todayLeft, setTodayLeft] = useState(false);
   
   // Profile Picture States
   const [avatarImage, setAvatarImage] = useState<string | null>(null);
@@ -330,46 +394,39 @@ export default function EmployeeProfilePage() {
             </div>
           </div>
 
-          <div className="border-t border-slate-100 mt-4 pt-4 flex items-center justify-between">
-            {/* Score Display */}
+          {/* ── Attendance Summary Pill ─────────────────────────────── */}
+          <button
+            onClick={() => setIsAttendanceOpen(true)}
+            className="mt-4 w-full border-t border-slate-100 pt-4 flex items-center justify-between cursor-pointer group"
+          >
             <div className="flex items-center gap-3">
-              <div className="relative w-16 h-16">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 90 90">
-                  <circle cx="45" cy="45" r={radius} stroke="#f1f5f9" strokeWidth="7" fill="transparent" />
-                  <circle
-                    cx="45"
-                    cy="45"
-                    r={radius}
-                    stroke={ratingConfig.color}
-                    strokeWidth="7"
-                    fill="transparent"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    className="transition-all duration-700 ease-out"
-                  />
+              {/* Mini donut */}
+              <div className="relative w-12 h-12 flex-shrink-0">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 44 44">
+                  <circle cx="22" cy="22" r="18" stroke="#f1f5f9" strokeWidth="5" fill="none" />
+                  <circle cx="22" cy="22" r="18" stroke="#10b981" strokeWidth="5" fill="none"
+                    strokeDasharray={2 * Math.PI * 18}
+                    strokeDashoffset={2 * Math.PI * 18 * (1 - 13 / 30)}
+                    strokeLinecap="round" />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-base font-extrabold text-slate-900">{mockEmployee.performance.overallScore}</span>
-                  <span className="text-[8px] text-slate-400 font-medium uppercase">Score</span>
-                </div>
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-extrabold text-slate-800">13/30</span>
               </div>
-              <div>
-                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Performance Rating</div>
-                <div className={`mt-0.5 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${ratingConfig.bg}`}>
-                  {ratingConfig.label}
+              <div className="text-left">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Attendance</div>
+                <div className="text-xs font-bold text-slate-800">13 of 30 days attended</div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
+                  <span className="text-[10px] text-slate-500">3 late arrivals this month</span>
                 </div>
               </div>
             </div>
-
-            {/* Score info */}
-            <div className="text-right">
-              <div className="text-[10px] text-slate-400 uppercase">Quiz Avg</div>
-              <div className="text-sm font-bold text-slate-800">{mockEmployee.performance.quizScore}/10</div>
-              <div className="text-[10px] text-slate-400 uppercase mt-1">Visit Avg</div>
-              <div className="text-sm font-bold text-slate-800">{mockEmployee.performance.visitScore}/10</div>
+            <div className="flex items-center gap-1 text-slate-400 group-hover:text-red-600 transition-colors">
+              <span className="text-[10px] font-semibold">View</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </div>
-          </div>
+          </button>
         </section>
 
         {/* Navigation Tabs */}
@@ -1099,8 +1156,334 @@ export default function EmployeeProfilePage() {
         </Link>
       </nav>
 
+      {/* ╔══════════════════════════════════════════════════════╗ */}
+      {/* ║            ATTENDANCE MODAL / FULL CARD             ║ */}
+      {/* ╚══════════════════════════════════════════════════════╝ */}
+      {isAttendanceOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-hidden animate-fade-in">
+          {/* Header */}
+          <header className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-slate-100 shadow-sm flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setIsAttendanceOpen(false)} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-600 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+                </svg>
+              </button>
+              <h2 className="text-base font-bold text-slate-900" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>Attendance</h2>
+            </div>
+            <span className="text-[11px] font-bold text-slate-400">{MONTH_LABEL}</span>
+          </header>
+
+          <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 pb-8">
+
+            {/* ── Today's Attendance Card ─────────────────────────────── */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Today's Status</h3>
+                <span className="text-[10px] text-slate-400 font-medium">Mon, 30 June 2025</span>
+              </div>
+
+              {/* Status row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className={`rounded-xl p-3 border ${todayArrived ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}>
+                  <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider mb-1">Arrive</div>
+                  {todayArrived ? (
+                    <div>
+                      <div className="text-sm font-extrabold text-emerald-700">09:03 AM</div>
+                      <div className="text-[9px] text-emerald-500 font-semibold mt-0.5">✓ On Time</div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-400 font-semibold">Not yet</div>
+                  )}
+                </div>
+                <div className={`rounded-xl p-3 border ${todayLeft ? "bg-rose-50 border-rose-100" : "bg-slate-50 border-slate-100"}`}>
+                  <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider mb-1">Leave</div>
+                  {todayLeft ? (
+                    <div>
+                      <div className="text-sm font-extrabold text-rose-700">05:30 PM</div>
+                      <div className="text-[9px] text-rose-500 font-semibold mt-0.5">✓ Standard Time</div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-400 font-semibold">Not yet</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Selfie camera buttons */}
+              {!cameraActive ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => { setCameraActive(true); }}
+                    disabled={todayArrived}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${todayArrived ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-red-600 text-white hover:bg-red-700 shadow-sm"}`}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    {todayArrived ? "Arrived ✓" : "Take Arrive Selfie"}
+                  </button>
+                  <button
+                    onClick={() => { setCameraActive(true); }}
+                    disabled={!todayArrived || todayLeft}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${!todayArrived || todayLeft ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-slate-800 text-white hover:bg-slate-900 shadow-sm"}`}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    {todayLeft ? "Left ✓" : "Take Leave Selfie"}
+                  </button>
+                </div>
+              ) : (
+                /* Camera View Mockup */
+                <div className="space-y-3">
+                  <div className="relative w-full aspect-video rounded-xl bg-slate-900 overflow-hidden flex items-center justify-center">
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.5">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    </div>
+                    {/* Face guide overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-28 h-36 border-2 border-dashed border-white/30 rounded-[50%]"></div>
+                    </div>
+                    {/* Top label */}
+                    <div className="absolute top-3 left-0 right-0 text-center">
+                      <span className="text-[10px] text-white/70 font-semibold bg-black/40 px-2 py-0.5 rounded-full">Position your face in the frame</span>
+                    </div>
+                    {/* Time stamp */}
+                    <div className="absolute bottom-2 right-3 text-[9px] text-white/50 font-mono">
+                      30 Jun 2025  09:03:41
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setCameraActive(false)}
+                      className="py-2 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-bold hover:bg-slate-200 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => { setTodayArrived(true); setCameraActive(false); }}
+                      className="col-span-2 py-2 rounded-xl bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" fill="currentColor" /></svg>
+                      Capture & Submit
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Monthly Summary Cards ──────────────────────────────── */}
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { label: "Present", value: 13, color: "text-emerald-600", dot: "bg-emerald-500" },
+                { label: "Late",    value: 3,  color: "text-amber-600",   dot: "bg-amber-400" },
+                { label: "Sick",    value: 2,  color: "text-blue-600",    dot: "bg-blue-400" },
+                { label: "Absent",  value: 2,  color: "text-red-600",     dot: "bg-red-400" },
+              ].map((s) => (
+                <div key={s.label} className="bg-white rounded-xl border border-slate-100 shadow-sm p-2.5 text-center">
+                  <span className={`w-2 h-2 rounded-full ${s.dot} inline-block mb-1`}></span>
+                  <div className={`text-base font-extrabold ${s.color}`}>{s.value}</div>
+                  <div className="text-[9px] text-slate-400 font-semibold">{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Streak Badge ───────────────────────────────────────── */}
+            <div className="bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+              <span className="text-2xl">🔥</span>
+              <div>
+                <div className="text-xs font-extrabold text-white">5-Day Attendance Streak!</div>
+                <div className="text-[10px] text-orange-100">Keep it up — you&apos;re on a roll this week.</div>
+              </div>
+            </div>
+
+            {/* ── Monthly Calendar ───────────────────────────────────── */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+              <h3 className="text-xs font-extrabold text-slate-800 mb-3 uppercase tracking-wider">{MONTH_LABEL} Calendar</h3>
+              {/* Day headers */}
+              <div className="grid grid-cols-7 mb-1">
+                {["S","M","T","W","T","F","S"].map((d, i) => (
+                  <div key={i} className="text-center text-[9px] font-bold text-slate-400">{d}</div>
+                ))}
+              </div>
+              {/* Days grid with leading blanks */}
+              <div className="grid grid-cols-7 gap-y-1">
+                {Array.from({ length: MONTH_START_DOW }).map((_, i) => (
+                  <div key={`blank-${i}`} />
+                ))}
+                {mockCalendar.map((d) => (
+                  <div key={d.date} className="flex flex-col items-center gap-0.5 py-0.5">
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold
+                      ${d.status === "weekend" ? "text-slate-300" : "text-white"}
+                      ${d.status !== "weekend" ? dayStatusColor[d.status] : "bg-transparent"}`}
+                    >
+                      {d.date}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {/* Legend */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 pt-3 border-t border-slate-50">
+                {[
+                  { label: "Present",  dot: "bg-emerald-500" },
+                  { label: "Late",     dot: "bg-amber-400" },
+                  { label: "Absent",   dot: "bg-red-400" },
+                  { label: "Sick",     dot: "bg-blue-400" },
+                ].map((l) => (
+                  <div key={l.label} className="flex items-center gap-1">
+                    <span className={`w-2 h-2 rounded-full ${l.dot} inline-block`}></span>
+                    <span className="text-[9px] text-slate-500 font-semibold">{l.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Analytics Charts ───────────────────────────────────── */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Analytics</h3>
+                {/* Filter pills */}
+                <div className="flex gap-1">
+                  {(["week","month","year"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setAttendanceFilter(f)}
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition-all cursor-pointer capitalize ${attendanceFilter === f ? "bg-red-600 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 1. Attendance Donut Chart */}
+              <div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Days Breakdown</div>
+                <div className="flex items-center gap-5">
+                  {/* Donut via SVG stacked arcs */}
+                  <div className="relative w-20 h-20 flex-shrink-0">
+                    <svg viewBox="0 0 44 44" className="w-full h-full -rotate-90">
+                      {/* Present 13/20 = 65% */}
+                      <circle cx="22" cy="22" r="16" fill="none" stroke="#10b981" strokeWidth="7"
+                        strokeDasharray={`${(13/20) * 2 * Math.PI * 16} ${2 * Math.PI * 16}`} />
+                      {/* Late 3/20 = 15% */}
+                      <circle cx="22" cy="22" r="16" fill="none" stroke="#fbbf24" strokeWidth="7"
+                        strokeDasharray={`${(3/20) * 2 * Math.PI * 16} ${2 * Math.PI * 16}`}
+                        strokeDashoffset={`${-(13/20) * 2 * Math.PI * 16}`} />
+                      {/* Sick 2/20 = 10% */}
+                      <circle cx="22" cy="22" r="16" fill="none" stroke="#60a5fa" strokeWidth="7"
+                        strokeDasharray={`${(2/20) * 2 * Math.PI * 16} ${2 * Math.PI * 16}`}
+                        strokeDashoffset={`${-((13+3)/20) * 2 * Math.PI * 16}`} />
+                      {/* Absent 2/20 = 10% */}
+                      <circle cx="22" cy="22" r="16" fill="none" stroke="#f87171" strokeWidth="7"
+                        strokeDasharray={`${(2/20) * 2 * Math.PI * 16} ${2 * Math.PI * 16}`}
+                        strokeDashoffset={`${-((13+3+2)/20) * 2 * Math.PI * 16}`} />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-sm font-extrabold text-slate-900">65%</span>
+                      <span className="text-[8px] text-slate-400">Present</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    {[
+                      { label: "Present", val: 13, color: "bg-emerald-500" },
+                      { label: "Late",    val: 3,  color: "bg-amber-400" },
+                      { label: "Sick",    val: 2,  color: "bg-blue-400" },
+                      { label: "Absent",  val: 2,  color: "bg-red-400" },
+                    ].map((i) => (
+                      <div key={i.label} className="flex items-center gap-2 text-[10px]">
+                        <span className={`w-2 h-2 rounded-full ${i.color} flex-shrink-0`}></span>
+                        <span className="text-slate-600 w-12">{i.label}</span>
+                        <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${i.color}`} style={{ width: `${(i.val/20)*100}%` }} />
+                        </div>
+                        <span className="font-bold text-slate-700 w-4 text-right">{i.val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Arrival vs Departure Bar Chart */}
+              <div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Arrival &amp; Departure — This Week</div>
+                <div className="flex items-end gap-2 h-24 px-1">
+                  {mockBarData.map((d, idx) => {
+                    // For each day: arrive bar (red if late), leave bar (amber if early)
+                    const lateArrival = d.arrive > WORK_START;
+                    const earlyLeave  = d.leave  < WORK_END;
+                    const arriveH = Math.min(100, ((d.arrive - 8) / 2) * 60); // visual height scale
+                    const leaveH  = Math.min(100, ((d.leave  - 8) / 2) * 60);
+                    return (
+                      <div key={idx} className="flex-1 flex flex-col items-center gap-0.5">
+                        <div className="w-full flex gap-0.5 items-end" style={{ height: "72px" }}>
+                          {/* Arrive bar */}
+                          <div className="flex-1 rounded-t flex items-end justify-center"
+                            style={{ height: "100%", background: "transparent", position: "relative" }}>
+                            <div
+                              className={`w-full rounded-t-sm transition-all ${lateArrival ? "bg-amber-400" : "bg-emerald-400"}`}
+                              style={{ height: `${arriveH}%` }}
+                            />
+                          </div>
+                          {/* Leave bar */}
+                          <div className="flex-1 rounded-t flex items-end justify-center"
+                            style={{ height: "100%", background: "transparent", position: "relative" }}>
+                            <div
+                              className={`w-full rounded-t-sm transition-all ${earlyLeave ? "bg-orange-400" : "bg-slate-300"}`}
+                              style={{ height: `${leaveH}%` }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-bold text-slate-400">{d.day}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-4 mt-2">
+                  <div className="flex items-center gap-1 text-[9px] text-slate-500">
+                    <span className="w-2 h-2 rounded-sm bg-emerald-400"></span> On-time Arrive
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] text-slate-500">
+                    <span className="w-2 h-2 rounded-sm bg-amber-400"></span> Late Arrive
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] text-slate-500">
+                    <span className="w-2 h-2 rounded-sm bg-orange-400"></span> Early Leave
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Average Times */}
+              <div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Averages</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Avg Arrive",   value: "09:04 AM", icon: "🕘", sub: "+4 min late" },
+                    { label: "Avg Leave",    value: "05:01 PM", icon: "🕔", sub: "Standard" },
+                    { label: "Avg Work Hrs", value: "7h 57m",   icon: "⏱️", sub: "of 8h target" },
+                  ].map((a) => (
+                    <div key={a.label} className="bg-slate-50 rounded-xl p-2.5 text-center border border-slate-100">
+                      <div className="text-base mb-0.5">{a.icon}</div>
+                      <div className="text-[11px] font-extrabold text-slate-800">{a.value}</div>
+                      <div className="text-[9px] text-slate-400 font-medium mt-0.5">{a.sub}</div>
+                      <div className="text-[9px] text-slate-400 mt-0.5">{a.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* Edit Avatar Crop/Position Modal */}
       {isEditModalOpen && (
+
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white rounded-2xl max-w-xs w-full p-5 shadow-2xl border border-slate-100 flex flex-col space-y-4">
             <div className="text-center">
