@@ -38,6 +38,10 @@ export interface IAssessment {
   questions: IQuestion[];
   pool: IQuizPool;
   createdAt?: string;
+  divisions?: string[];
+  showrooms?: string[];
+  designations?: string[];
+  employees?: string[];
 }
 
 // Authentication related interfaces

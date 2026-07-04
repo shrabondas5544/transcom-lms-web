@@ -310,7 +310,7 @@ export default function VisitAssessmentPage() {
         <div className="space-y-5">
           {CRITERIA.map((c, idx) => {
             const score = scores[c.key];
-            const { label, color, pill } = getRatingConfig(score);
+            const { label, color, bg } = getRatingConfig(score);
             const pct = ((score - 1) / 9) * 100;
             return (
               <section key={c.key} className="auth-card p-5 bg-white space-y-4">
@@ -387,7 +387,7 @@ export default function VisitAssessmentPage() {
 
                 {/* Rating Label Bar */}
                 <div className="flex items-center justify-between pt-1">
-                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold border ${pill}`}>
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold border ${bg}`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                     {label}
                   </div>

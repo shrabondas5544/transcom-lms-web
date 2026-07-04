@@ -6,12 +6,11 @@ import { usePathname } from "next/navigation";
 export default function BottomNav() {
   const pathname = usePathname();
 
-  // Hide navigation on auth pages and creation wizard
+  // Hide navigation on auth pages
   const isAuthPage = 
     pathname?.startsWith("/sign-in") || 
     pathname?.startsWith("/sign-up") || 
-    pathname === "/" ||
-    pathname === "/assessor/create-assessment";
+    pathname === "/";
   if (isAuthPage) return null;
 
   const navItems = [

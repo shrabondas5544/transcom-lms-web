@@ -50,6 +50,42 @@ export const SCOPE_METADATA = {
   } as Record<string, Record<string, string[]>>
 };
 
+export const AUDIENCE_METADATA = {
+  divisions: ["Dhaka Division", "Chittagong Division", "Sylhet Division", "Rajshahi Division"],
+  showrooms: {
+    "Dhaka Division": ["Gulshan Outlet", "Dhanmondi Outlet", "Uttara Outlet", "Mirpur Outlet"],
+    "Chittagong Division": ["Agrabad Outlet", "GEC Circle Outlet", "Nasirabad Outlet"],
+    "Sylhet Division": ["Zindabazar Outlet", "Uposhahar Outlet"],
+    "Rajshahi Division": ["Saheb Bazar Outlet"]
+  } as Record<string, string[]>,
+  designations: ["Sales Executive", "Senior Sales Executive", "Assistant Branch Manager"]
+};
+
+export const MOCK_TARGET_EMPLOYEES = [
+  // Dhaka Division - Gulshan Outlet
+  { id: "EMP-2084", name: "Sayed Mahmud", division: "Dhaka Division", showroom: "Gulshan Outlet", designation: "Senior Sales Executive" },
+  { id: "EMP-2085", name: "Anisur Rahman", division: "Dhaka Division", showroom: "Gulshan Outlet", designation: "Sales Executive" },
+  { id: "EMP-2086", name: "Taskeen Ahmed", division: "Dhaka Division", showroom: "Gulshan Outlet", designation: "Assistant Branch Manager" },
+  // Dhaka Division - Dhanmondi Outlet
+  { id: "EMP-2087", name: "Fahim Shahriar", division: "Dhaka Division", showroom: "Dhanmondi Outlet", designation: "Sales Executive" },
+  { id: "EMP-2088", name: "Mehrab Hossain", division: "Dhaka Division", showroom: "Dhanmondi Outlet", designation: "Senior Sales Executive" },
+  // Dhaka Division - Uttara Outlet
+  { id: "EMP-2089", name: "Sadia Afrin", division: "Dhaka Division", showroom: "Uttara Outlet", designation: "Sales Executive" },
+  { id: "EMP-2090", name: "Kamrul Hasan", division: "Dhaka Division", showroom: "Uttara Outlet", designation: "Assistant Branch Manager" },
+  
+  // Chittagong Division - Agrabad Outlet
+  { id: "EMP-3011", name: "Imran Khan", division: "Chittagong Division", showroom: "Agrabad Outlet", designation: "Sales Executive" },
+  { id: "EMP-3012", name: "Arifur Rahman", division: "Chittagong Division", showroom: "Agrabad Outlet", designation: "Senior Sales Executive" },
+  { id: "EMP-3013", name: "Nayeem Uddin", division: "Chittagong Division", showroom: "GEC Circle Outlet", designation: "Sales Executive" },
+  
+  // Sylhet Division
+  { id: "EMP-4011", name: "Hafizur Rahman", division: "Sylhet Division", showroom: "Zindabazar Outlet", designation: "Senior Sales Executive" },
+  { id: "EMP-4012", name: "Zamil Ahmed", division: "Sylhet Division", showroom: "Uposhahar Outlet", designation: "Assistant Branch Manager" },
+  
+  // Rajshahi Division
+  { id: "EMP-5011", name: "Sujon Ali", division: "Rajshahi Division", showroom: "Saheb Bazar Outlet", designation: "Sales Executive" }
+];
+
 // ── JWT SECURITY STORAGE SERVICE ──────────────────────────────────────────
 const JWT_COOKIE_NAME = "transcom_lms_auth_token";
 

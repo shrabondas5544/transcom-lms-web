@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const mockEmployee = {
   id: "EMP-2084",
@@ -118,7 +118,7 @@ const mockBarData = [
 ];
 const WORK_START = 9.0;
 const WORK_END   = 17.0;
-const dayStatusColor: Record<DayStatus, string> = {
+const dayStatusColor: Record<string, string> = {
   present: "bg-emerald-500",
   late:    "bg-amber-400",
   absent:  "bg-red-400",
@@ -143,6 +143,68 @@ export default function EmployeeProfilePage() {
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(1);
   const [todayArrived, setTodayArrived] = useState(false);
   const [todayLeft, setTodayLeft] = useState(false);
+
+  // Camera & Stream states
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (cameraActive && !capturedImage) {
+      let cancelled = false;
+      (async () => {
+        try {
+          const mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 960 } },
+          });
+          if (cancelled) { mediaStream.getTracks().forEach(t => t.stop()); return; }
+          streamRef.current = mediaStream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = mediaStream;
+            await videoRef.current.play();
+          }
+          setCameraReady(true);
+        } catch {
+          setCameraReady(false);
+        }
+      })();
+      return () => { cancelled = true; cleanupStream(); };
+    } else {
+      cleanupStream();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cameraActive, capturedImage]);
+
+  const cleanupStream = () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    setCameraReady(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      if (ctx) {
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+        ctx.drawImage(videoRef.current, 0, 0);
+        setCapturedImage(canvasRef.current.toDataURL("image/jpeg", 0.85));
+      }
+    }
+  };
+
+  const handleNativeCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (ev.target?.result) setCapturedImage(ev.target.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
   
   // Profile Picture States
   const [avatarImage, setAvatarImage] = useState<string | null>(null);
@@ -1398,49 +1460,104 @@ export default function EmployeeProfilePage() {
                   </button>
                 </div>
               ) : (
-                /* Camera View Mockup */
                 <div className="space-y-3">
-                  <div className="relative w-full aspect-video rounded-xl bg-slate-900 overflow-hidden flex items-center justify-center">
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.5">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                        <circle cx="12" cy="13" r="4" />
-                      </svg>
-                    </div>
-                    {/* Face guide overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-28 h-36 border-2 border-dashed border-white/30 rounded-[50%]"></div>
-                    </div>
-                    {/* Top label */}
-                    <div className="absolute top-3 left-0 right-0 text-center">
-                      <span className="text-[10px] text-white/70 font-semibold bg-black/40 px-2 py-0.5 rounded-full">Position your face in the frame</span>
-                    </div>
+                  <div className="relative w-full aspect-[3/4] rounded-xl bg-slate-900 overflow-hidden flex items-center justify-center">
+                    {capturedImage ? (
+                      <img src={capturedImage} alt="Captured selfie" className="w-full h-full object-cover" />
+                    ) : (
+                      <>
+                        <video 
+                          ref={videoRef} 
+                          autoPlay 
+                          playsInline 
+                          muted 
+                          className={`w-full h-full object-cover ${!cameraReady ? "hidden" : ""}`}
+                        />
+                        {!cameraReady && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-5 px-6 text-center bg-slate-800">
+                            <div className="w-16 h-16 rounded-full bg-slate-700/60 flex items-center justify-center animate-pulse">
+                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                            </div>
+                            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">Connecting to camera...<br/>If it doesn't load, use the button below.</p>
+                            <label className="bg-red-600 text-white text-xs font-bold px-5 py-3 rounded-xl shadow-sm cursor-pointer hover:bg-red-700 active:scale-95 transition-all flex items-center gap-2">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                              Take Photo with Camera
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                capture="user" 
+                                className="hidden" 
+                                onChange={handleNativeCapture}
+                              />
+                            </label>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    <canvas ref={canvasRef} className="hidden" />
+
+                    {!capturedImage && cameraReady && (
+                      <>
+                        {/* Face guide overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="w-48 h-64 border-2 border-dashed border-white/40 rounded-[100px] shadow-[0_0_0_9999px_rgba(0,0,0,0.4)]"></div>
+                        </div>
+                        {/* Top label */}
+                        <div className="absolute top-4 left-0 right-0 text-center pointer-events-none">
+                          <span className="text-xs text-white font-bold bg-black/60 backdrop-blur-sm px-4 py-1.5 rounded-full">
+                            Position face in frame
+                          </span>
+                        </div>
+                      </>
+                    )}
                     {/* Time stamp */}
-                    <div className="absolute bottom-2 right-3 text-[9px] text-white/50 font-mono">
-                      30 Jun 2025  09:03:41
+                    <div className="absolute bottom-3 right-4 text-[10px] text-white/90 font-mono font-bold bg-black/40 px-2 py-1 rounded">
+                      {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <button
-                      onClick={() => setCameraActive(false)}
-                      className="py-2 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-bold hover:bg-slate-200 cursor-pointer"
+                      onClick={() => {
+                        setCameraActive(false);
+                        setCapturedImage(null);
+                      }}
+                      className="py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 cursor-pointer"
                     >
                       Cancel
                     </button>
-                    <button
-                      onClick={() => {
-                        if (cameraMode === "arrive") {
-                          setTodayArrived(true);
-                        } else {
-                          setTodayLeft(true);
-                        }
-                        setCameraActive(false);
-                      }}
-                      className="col-span-2 py-2 rounded-xl bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" fill="currentColor" /></svg>
-                      Capture & Submit
-                    </button>
+                    {!capturedImage && cameraReady ? (
+                      <button
+                        onClick={capturePhoto}
+                        className="col-span-2 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <div className="w-5 h-5 rounded-full border-2 border-white p-0.5">
+                          <div className="w-full h-full bg-white rounded-full"></div>
+                        </div>
+                        Capture Photo
+                      </button>
+                    ) : !capturedImage && !cameraReady ? (
+                       <label className="col-span-2 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold cursor-pointer flex items-center justify-center gap-2 hover:bg-red-700 active:scale-[0.98] transition-all">
+                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                         Open Camera
+                         <input type="file" accept="image/*" capture="user" className="hidden" onChange={handleNativeCapture} />
+                       </label>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (cameraMode === "arrive") {
+                            setTodayArrived(true);
+                          } else {
+                            setTodayLeft(true);
+                          }
+                          setCameraActive(false);
+                          setCapturedImage(null);
+                        }}
+                        className="col-span-2 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Submit Attendance
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
