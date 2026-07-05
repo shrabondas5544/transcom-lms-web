@@ -37,7 +37,7 @@ export default function SignInPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [form, setForm] = useState({ identifier: "", password: "", remember: false });
+  const [form, setForm] = useState({ identifier: "demo@transcom.com", password: "password123", remember: false });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +89,6 @@ export default function SignInPage() {
                   autoComplete="username"
                   value={form.identifier}
                   onChange={(e) => setForm({ ...form, identifier: e.target.value })}
-                  required
                 />
               </div>
             </div>
@@ -123,7 +122,6 @@ export default function SignInPage() {
                   autoComplete="current-password"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
                 />
                 <button
                   type="button"
@@ -147,38 +145,27 @@ export default function SignInPage() {
               <span className="text-sm text-slate-600">Keep me signed in for 30 days</span>
             </label>
 
-            {/* Submit */}
-            <button
-              type="submit"
+            {/* Submit Link */}
+            <Link
+              href="/employee/profile"
               id="sign-in-submit"
-              className="btn-primary mt-2"
-              disabled={isLoading}
+              className="btn-primary mt-2 block text-center flex items-center justify-center"
             >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                "Sign In"
-              )}
-            </button>
+              Sign In
+            </Link>
           </form>
 
           {/* Divider */}
           <div className="divider my-5">or</div>
 
-          {/* Google Button */}
-          <button
-            type="button"
-            className="btn-google"
-            onClick={() => router.push("/assessor/dashboard")}
+          {/* Google Link */}
+          <Link
+            href="/assessor/dashboard"
+            className="btn-google flex items-center justify-center gap-2.5"
           >
             <GoogleIcon />
             <span>Continue with Google</span>
-          </button>
+          </Link>
         </div>
 
         {/* Footer link */}
