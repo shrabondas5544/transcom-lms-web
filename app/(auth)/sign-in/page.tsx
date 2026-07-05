@@ -174,7 +174,7 @@ export default function SignInPage() {
           <button
             type="button"
             className="btn-google"
-            onClick={() => router.push("/employee/profile")}
+            onClick={() => router.push("/assessor/dashboard")}
           >
             <GoogleIcon />
             <span>Continue with Google</span>
