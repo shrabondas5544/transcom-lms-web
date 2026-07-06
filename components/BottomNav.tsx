@@ -6,10 +6,11 @@ import { usePathname } from "next/navigation";
 export default function BottomNav() {
   const pathname = usePathname();
 
-  // Hide navigation on auth pages
+  // Hide navigation on auth pages and the admin portal (which has its own sidebar layout)
   const isAuthPage = 
     pathname?.startsWith("/sign-in") || 
     pathname?.startsWith("/sign-up") || 
+    pathname?.startsWith("/admin")   ||
     pathname === "/";
   if (isAuthPage) return null;
 
