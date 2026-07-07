@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import ProfileInfoTab from "../../../components/profile/ProfileInfoTab";
 import DocumentsTab from "../../../components/profile/DocumentsTab";
@@ -139,6 +140,7 @@ function getRatingConfig(score: number) {
 }
 
 export default function EmployeeProfilePage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"profileInfo" | "documents" | "education" | "skill">("profileInfo");
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [attendanceFilter, setAttendanceFilter] = useState<"week" | "month" | "year">("month");
@@ -180,6 +182,65 @@ export default function EmployeeProfilePage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraActive, capturedImage]);
+
+  useEffect(() => {
+    const profileId = sessionStorage.getItem("employeeProfileId");
+    if (!profileId) {
+      router.push("/sign-in");
+      return;
+    }
+
+    async function fetchProfile() {
+      try {
+        const res = await fetch(`http://localhost:5276/api/EmployeeProfile/${profileId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPersonalInfo({
+            name: data.name,
+            fatherName: data.fatherName,
+            motherName: data.motherName,
+            presentAddress: data.presentAddress,
+            permanentAddress: data.permanentAddress,
+            dob: data.dob,
+            phone: data.phone,
+            email: data.email,
+            nationality: data.nationality,
+            maritalStatus: data.maritalStatus,
+            marriageDate: data.marriageDate || "",
+            religion: data.religion,
+            sex: data.sex,
+            bloodType: data.bloodType,
+            nid: data.nid,
+            passport: data.passport,
+            hobbies: data.hobbies,
+            facebook: data.facebook,
+            instagram: data.instagram,
+            xLink: data.xLink,
+            linkedin: data.linkedin
+          });
+          if (data.educationSSC) setEducationSSC(data.educationSSC);
+          if (data.educationHSC) setEducationHSC(data.educationHSC);
+          if (data.educationDiploma) setEducationDiploma(data.educationDiploma);
+          if (data.educationGraduate) setEducationGraduate(data.educationGraduate);
+          if (data.educationPostGraduate) setEducationPostGraduate(data.educationPostGraduate);
+          if (data.documents) {
+            setDocResume(data.documents.resume || null);
+            setDocNidEmpFront(data.documents.nidEmpFront || null);
+            setDocNidEmpBack(data.documents.nidEmpBack || null);
+            setDocNidNomFront(data.documents.nidNomFront || null);
+            setDocNidNomBack(data.documents.nidNomBack || null);
+            setDocCovid(data.documents.covid || null);
+            setDocRelease(data.documents.release || null);
+            setDocPayslip(data.documents.payslip || null);
+            setDocTax(data.documents.tax || null);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching employee profile from API:", err);
+      }
+    }
+    fetchProfile();
+  }, []);
 
   const cleanupStream = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
@@ -226,27 +287,27 @@ export default function EmployeeProfilePage() {
 
   // Profile Information States (with Social Links)
   const [personalInfo, setPersonalInfo] = useState({
-    name: "Sayed Mahmud",
-    fatherName: "Sayed Ali",
-    motherName: "Mahmuda Begum",
-    presentAddress: "House 12, Road 5, Gulshan 1, Dhaka",
-    permanentAddress: "Vill: Puran Bazar, P.O: Chandpur, Dist: Chandpur",
-    dob: "1997-04-05",
-    phone: "+880 1712-345678",
-    email: "sayed.mahmud@transcom.com",
-    nationality: "Bangladeshi",
+    name: "",
+    fatherName: "",
+    motherName: "",
+    presentAddress: "",
+    permanentAddress: "",
+    dob: "",
+    phone: "",
+    email: "",
+    nationality: "",
     maritalStatus: "Single",
     marriageDate: "",
-    religion: "Muslim",
-    sex: "Male",
-    bloodType: "B+",
-    nid: "19972628491823",
-    passport: "EG0948271",
-    hobbies: "Reading books, playing cricket",
-    facebook: "https://facebook.com",
-    instagram: "https://instagram.com",
-    xLink: "https://x.com",
-    linkedin: "https://linkedin.com"
+    religion: "",
+    sex: "",
+    bloodType: "",
+    nid: "",
+    passport: "",
+    hobbies: "",
+    facebook: "",
+    instagram: "",
+    xLink: "",
+    linkedin: ""
   });
 
   const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false);
@@ -254,18 +315,18 @@ export default function EmployeeProfilePage() {
 
   // 5 Education Sections States (with added Group parameter)
   const [educationSSC, setEducationSSC] = useState({
-    institution: "Dhaka Collegiate School",
-    division: "Dhaka", // Dropdown: Barishal, Chattogram, Dhaka, Khulna, Mymensingh, Rajshahi, Rangpur, Sylhet
-    group: "Science", // Science, Commerce, Arts
-    yearPassed: "2013",
-    gpa: "5.00"
+    institution: "",
+    division: "",
+    group: "",
+    yearPassed: "",
+    gpa: ""
   });
   const [educationHSC, setEducationHSC] = useState({
-    institution: "Dhaka City College",
-    division: "Dhaka", // Dropdown: Barishal, Chattogram, Dhaka, Khulna, Mymensingh, Rajshahi, Rangpur, Sylhet
-    group: "Science", // Science, Commerce, Arts
-    yearPassed: "2015",
-    gpa: "5.00"
+    institution: "",
+    division: "",
+    group: "",
+    yearPassed: "",
+    gpa: ""
   });
   const [educationDiploma, setEducationDiploma] = useState({
     institution: "",
@@ -273,12 +334,12 @@ export default function EmployeeProfilePage() {
     cgpa: ""
   });
   const [educationGraduate, setEducationGraduate] = useState({
-    institution: "Dhaka University",
-    passedYear: "2019",
-    degree: "BBA",
-    result: "CGPA 3.65",
-    achievement: "Dean's Honor List for Academic Excellence",
-    achievementFile: "Dean_Award_BBA.pdf" as string | null
+    institution: "",
+    passedYear: "",
+    degree: "",
+    result: "",
+    achievement: "",
+    achievementFile: null as string | null
   });
   const [educationPostGraduate, setEducationPostGraduate] = useState({
     institution: "",
@@ -355,21 +416,80 @@ export default function EmployeeProfilePage() {
     }
   };
 
-  const handleSingleDocUpload = (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (key === "resume") setDocResume(file.name);
-      else if (key === "nidEmpFront") setDocNidEmpFront(file.name);
-      else if (key === "nidEmpBack") setDocNidEmpBack(file.name);
-      else if (key === "nidNomFront") setDocNidNomFront(file.name);
-      else if (key === "nidNomBack") setDocNidNomBack(file.name);
-      else if (key === "covid") setDocCovid(file.name);
-      else if (key === "release") setDocRelease(file.name);
-      else if (key === "payslip") setDocPayslip(file.name);
-      else if (key === "tax") setDocTax(file.name);
-      else if (key === "gradAchievement") setTempGraduate({ ...tempGraduate, achievementFile: file.name });
-      else if (key === "postGradAchievement") setTempPostGraduate({ ...tempPostGraduate, achievementFile: file.name });
+  const handleSaveProfile = async (updatedData: any) => {
+    const payload = {
+      name: updatedData.personalInfo?.name ?? personalInfo.name,
+      fatherName: updatedData.personalInfo?.fatherName ?? personalInfo.fatherName,
+      motherName: updatedData.personalInfo?.motherName ?? personalInfo.motherName,
+      presentAddress: updatedData.personalInfo?.presentAddress ?? personalInfo.presentAddress,
+      permanentAddress: updatedData.personalInfo?.permanentAddress ?? personalInfo.permanentAddress,
+      dob: updatedData.personalInfo?.dob ?? personalInfo.dob,
+      phone: updatedData.personalInfo?.phone ?? personalInfo.phone,
+      email: updatedData.personalInfo?.email ?? personalInfo.email,
+      nationality: updatedData.personalInfo?.nationality ?? personalInfo.nationality,
+      maritalStatus: updatedData.personalInfo?.maritalStatus ?? personalInfo.maritalStatus,
+      marriageDate: updatedData.personalInfo?.marriageDate ?? personalInfo.marriageDate,
+      religion: updatedData.personalInfo?.religion ?? personalInfo.religion,
+      sex: updatedData.personalInfo?.sex ?? personalInfo.sex,
+      bloodType: updatedData.personalInfo?.bloodType ?? personalInfo.bloodType,
+      nid: updatedData.personalInfo?.nid ?? personalInfo.nid,
+      passport: updatedData.personalInfo?.passport ?? personalInfo.passport,
+      hobbies: updatedData.personalInfo?.hobbies ?? personalInfo.hobbies,
+      facebook: updatedData.personalInfo?.facebook ?? personalInfo.facebook,
+      instagram: updatedData.personalInfo?.instagram ?? personalInfo.instagram,
+      xLink: updatedData.personalInfo?.xLink ?? personalInfo.xLink,
+      linkedin: updatedData.personalInfo?.linkedin ?? personalInfo.linkedin,
+
+      educationSSC: updatedData.educationSSC ?? educationSSC,
+      educationHSC: updatedData.educationHSC ?? educationHSC,
+      educationDiploma: updatedData.educationDiploma ?? educationDiploma,
+      educationGraduate: updatedData.educationGraduate ?? educationGraduate,
+      educationPostGraduate: updatedData.educationPostGraduate ?? educationPostGraduate,
+
+      documents: {
+        resume: updatedData.documents?.resume !== undefined ? updatedData.documents.resume : docResume,
+        nidEmpFront: updatedData.documents?.nidEmpFront !== undefined ? updatedData.documents.nidEmpFront : docNidEmpFront,
+        nidEmpBack: updatedData.documents?.nidEmpBack !== undefined ? updatedData.documents.nidEmpBack : docNidEmpBack,
+        nidNomFront: updatedData.documents?.nidNomFront !== undefined ? updatedData.documents.nidNomFront : docNidNomFront,
+        nidNomBack: updatedData.documents?.nidNomBack !== undefined ? updatedData.documents.nidNomBack : docNidNomBack,
+        covid: updatedData.documents?.covid !== undefined ? updatedData.documents.covid : docCovid,
+        release: updatedData.documents?.release !== undefined ? updatedData.documents.release : docRelease,
+        payslip: updatedData.documents?.payslip !== undefined ? updatedData.documents.payslip : docPayslip,
+        tax: updatedData.documents?.tax !== undefined ? updatedData.documents.tax : docTax
+      }
+    };
+
+    const profileId = sessionStorage.getItem("employeeProfileId") || "1";
+    try {
+      const res = await fetch(`http://localhost:5276/api/EmployeeProfile/${profileId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        if (updatedData.personalInfo) setPersonalInfo(updatedData.personalInfo);
+        if (updatedData.educationSSC) setEducationSSC(updatedData.educationSSC);
+        if (updatedData.educationHSC) setEducationHSC(updatedData.educationHSC);
+        if (updatedData.educationDiploma) setEducationDiploma(updatedData.educationDiploma);
+        if (updatedData.educationGraduate) setEducationGraduate(updatedData.educationGraduate);
+        if (updatedData.educationPostGraduate) setEducationPostGraduate(updatedData.educationPostGraduate);
+        if (updatedData.documents) {
+          setDocResume(updatedData.documents.resume);
+          setDocNidEmpFront(updatedData.documents.nidEmpFront);
+          setDocNidEmpBack(updatedData.documents.nidEmpBack);
+          setDocNidNomFront(updatedData.documents.nidNomFront);
+          setDocNidNomBack(updatedData.documents.nidNomBack);
+          setDocCovid(updatedData.documents.covid);
+          setDocRelease(updatedData.documents.release);
+          setDocPayslip(updatedData.documents.payslip);
+          setDocTax(updatedData.documents.tax);
+        }
+        return true;
+      }
+    } catch (err) {
+      console.error("Error saving profile update:", err);
     }
+    return false;
   };
 
   return (
@@ -589,6 +709,7 @@ export default function EmployeeProfilePage() {
               personalInfo={personalInfo}
               setPersonalInfo={setPersonalInfo}
               mockEmployee={mockEmployee}
+              onSave={handleSaveProfile}
             />
           )}
 
@@ -612,6 +733,7 @@ export default function EmployeeProfilePage() {
               setDocPayslip={setDocPayslip}
               docTax={docTax}
               setDocTax={setDocTax}
+              onSave={handleSaveProfile}
             />
           )}
 
@@ -627,6 +749,7 @@ export default function EmployeeProfilePage() {
               setEducationGraduate={setEducationGraduate}
               educationPostGraduate={educationPostGraduate}
               setEducationPostGraduate={setEducationPostGraduate}
+              onSave={handleSaveProfile}
             />
           )}
 

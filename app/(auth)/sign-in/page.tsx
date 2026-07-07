@@ -37,15 +37,43 @@ export default function SignInPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [form, setForm] = useState({ identifier: "demo@transcom.com", password: "password123", remember: false });
+  const [form, setForm] = useState({ identifier: "", password: "", remember: false });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.identifier || !form.password) {
+      alert("Please enter your email/employee ID and password.");
+      return;
+    }
+
     setIsLoading(true);
-    // Placeholder: call sign-in API
-    await new Promise((r) => setTimeout(r, 1500));
-    setIsLoading(false);
-    router.push("/employee/profile");
+    try {
+      const res = await fetch("http://localhost:5276/api/Auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: form.identifier,
+          password: form.password
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        sessionStorage.setItem("employeeProfileId", data.id.toString());
+        sessionStorage.setItem("employeeName", data.name);
+        sessionStorage.setItem("employeeCode", data.employeeCode);
+        
+        router.push("/employee/profile");
+      } else {
+        const errMsg = await res.text();
+        alert(errMsg || "Invalid credentials. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("A connection error occurred. Make sure the API server is running.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -145,27 +173,25 @@ export default function SignInPage() {
               <span className="text-sm text-slate-600">Keep me signed in for 30 days</span>
             </label>
 
-            {/* Submit Link */}
-            <Link
-              href="/employee/profile"
+            {/* Submit Button */}
+            <button
+              type="submit"
               id="sign-in-submit"
-              className="btn-primary mt-2 block text-center flex items-center justify-center"
+              className="btn-primary mt-2 w-full flex items-center justify-center cursor-pointer"
+              disabled={isLoading}
             >
-              Sign In
-            </Link>
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                "Sign In"
+              )}
+            </button>
           </form>
-
-          {/* Divider */}
-          <div className="divider my-5">or</div>
-
-          {/* Google Link */}
-          <Link
-            href="/assessor/dashboard"
-            className="btn-google flex items-center justify-center gap-2.5"
-          >
-            <GoogleIcon />
-            <span>Continue with Google</span>
-          </Link>
         </div>
 
         {/* Footer link */}

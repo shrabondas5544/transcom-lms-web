@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface PersonalInfo {
   name: string;
@@ -35,14 +36,36 @@ interface ProfileInfoTabProps {
     reportingManager: string;
     designation: string;
   };
+  onSave: (updatedData: any) => Promise<boolean>;
 }
 
-export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmployee }: ProfileInfoTabProps) {
+export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmployee, onSave }: ProfileInfoTabProps) {
   const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false);
   const [tempInfo, setTempInfo] = useState<PersonalInfo>({ ...personalInfo });
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   return (
     <div className="space-y-4">
+      {successMessage && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-800 text-xs font-semibold animate-fade-in flex items-center gap-2">
+          <svg className="text-emerald-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          {successMessage}
+        </div>
+      )}
       {/* Employee Master Data */}
       <div className="auth-card p-5">
         <div className="flex items-center gap-2.5 border-b border-slate-100 pb-2.5 mb-4">
@@ -190,7 +213,7 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
       </div>
 
       {/* Profile Edit Modal */}
-      {isProfileEditModalOpen && (
+      {isMounted && isProfileEditModalOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-sm w-full my-8 p-5 shadow-2xl border border-slate-100 flex flex-col space-y-4 max-h-[85vh] overflow-y-auto scrollbar-none animate-fade-in">
             <div>
@@ -200,64 +223,74 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
               <p className="text-[10px] text-slate-500 mt-1">Update your personal details below.</p>
             </div>
 
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
-              setPersonalInfo(tempInfo);
-              setIsProfileEditModalOpen(false);
+              try {
+                const success = await onSave({ personalInfo: tempInfo });
+                if (success) {
+                  setIsProfileEditModalOpen(false);
+                  setSuccessMessage("Profile updated successfully!");
+                } else {
+                  alert("Failed to save changes. Please try again.");
+                }
+              } catch (err) {
+                console.error("Error saving profile changes:", err);
+                alert("A connection error occurred. Make sure the API server is running.");
+              }
             }} className="space-y-4 text-xs">
               
               <div>
                 <label className="block text-slate-650 font-medium mb-1">Name</label>
-                <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.name} onChange={(e) => setTempInfo({...tempInfo, name: e.target.value})} required />
+                <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.name || ""} onChange={(e) => setTempInfo({...tempInfo, name: e.target.value})} required />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Father's Name</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.fatherName} onChange={(e) => setTempInfo({...tempInfo, fatherName: e.target.value})} required />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.fatherName || ""} onChange={(e) => setTempInfo({...tempInfo, fatherName: e.target.value})} required />
                 </div>
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Mother's Name</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.motherName} onChange={(e) => setTempInfo({...tempInfo, motherName: e.target.value})} required />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.motherName || ""} onChange={(e) => setTempInfo({...tempInfo, motherName: e.target.value})} required />
                 </div>
               </div>
 
               <div>
                 <label className="block text-slate-650 font-medium mb-1">Present Address</label>
-                <textarea className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none h-14 resize-none" value={tempInfo.presentAddress} onChange={(e) => setTempInfo({...tempInfo, presentAddress: e.target.value})} required />
+                <textarea className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none h-14 resize-none" value={tempInfo.presentAddress || ""} onChange={(e) => setTempInfo({...tempInfo, presentAddress: e.target.value})} required />
               </div>
 
               <div>
                 <label className="block text-slate-650 font-medium mb-1">Permanent Address</label>
-                <textarea className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none h-14 resize-none" value={tempInfo.permanentAddress} onChange={(e) => setTempInfo({...tempInfo, permanentAddress: e.target.value})} required />
+                <textarea className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none h-14 resize-none" value={tempInfo.permanentAddress || ""} onChange={(e) => setTempInfo({...tempInfo, permanentAddress: e.target.value})} required />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Date of Birth</label>
-                  <input type="date" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.dob} onChange={(e) => setTempInfo({...tempInfo, dob: e.target.value})} required />
+                  <input type="date" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.dob || ""} onChange={(e) => setTempInfo({...tempInfo, dob: e.target.value})} required />
                 </div>
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Phone Number</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.phone} onChange={(e) => setTempInfo({...tempInfo, phone: e.target.value})} required />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.phone || ""} onChange={(e) => setTempInfo({...tempInfo, phone: e.target.value})} required />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Email Address</label>
-                  <input type="email" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.email} onChange={(e) => setTempInfo({...tempInfo, email: e.target.value})} required />
+                  <input type="email" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.email || ""} onChange={(e) => setTempInfo({...tempInfo, email: e.target.value})} required />
                 </div>
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Nationality</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.nationality} onChange={(e) => setTempInfo({...tempInfo, nationality: e.target.value})} required />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.nationality || ""} onChange={(e) => setTempInfo({...tempInfo, nationality: e.target.value})} required />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Marital Status</label>
-                  <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.maritalStatus} onChange={(e) => setTempInfo({...tempInfo, maritalStatus: e.target.value})}>
+                  <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.maritalStatus || ""} onChange={(e) => setTempInfo({...tempInfo, maritalStatus: e.target.value})}>
                     <option value="Single">Single</option>
                     <option value="Married">Married</option>
                     <option value="Divorced">Divorced</option>
@@ -266,7 +299,7 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
                 {tempInfo.maritalStatus === "Married" && (
                   <div>
                     <label className="block text-slate-650 font-medium mb-1">Marriage Date</label>
-                    <input type="date" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.marriageDate} onChange={(e) => setTempInfo({...tempInfo, marriageDate: e.target.value})} required />
+                    <input type="date" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.marriageDate || ""} onChange={(e) => setTempInfo({...tempInfo, marriageDate: e.target.value})} required />
                   </div>
                 )}
               </div>
@@ -274,7 +307,7 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Religion</label>
-                  <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.religion} onChange={(e) => setTempInfo({...tempInfo, religion: e.target.value})}>
+                  <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.religion || ""} onChange={(e) => setTempInfo({...tempInfo, religion: e.target.value})}>
                     <option value="Muslim">Muslim</option>
                     <option value="Hindu">Hindu</option>
                     <option value="Buddhist">Buddhist</option>
@@ -283,7 +316,7 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
                 </div>
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Sex</label>
-                  <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.sex} onChange={(e) => setTempInfo({...tempInfo, sex: e.target.value})}>
+                  <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.sex || ""} onChange={(e) => setTempInfo({...tempInfo, sex: e.target.value})}>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
@@ -291,7 +324,7 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
                 </div>
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Blood Type</label>
-                  <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.bloodType} onChange={(e) => setTempInfo({...tempInfo, bloodType: e.target.value})}>
+                  <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.bloodType || ""} onChange={(e) => setTempInfo({...tempInfo, bloodType: e.target.value})}>
                     <option value="A+">A+</option>
                     <option value="A-">A-</option>
                     <option value="B+">B+</option>
@@ -307,17 +340,17 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">National NID Num</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.nid} onChange={(e) => setTempInfo({...tempInfo, nid: e.target.value})} required />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.nid || ""} onChange={(e) => setTempInfo({...tempInfo, nid: e.target.value})} required />
                 </div>
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Passport Num</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.passport} onChange={(e) => setTempInfo({...tempInfo, passport: e.target.value})} />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.passport || ""} onChange={(e) => setTempInfo({...tempInfo, passport: e.target.value})} />
                 </div>
               </div>
 
               <div>
                 <label className="block text-slate-650 font-medium mb-1">Hobbies</label>
-                <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.hobbies} onChange={(e) => setTempInfo({...tempInfo, hobbies: e.target.value})} />
+                <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none" value={tempInfo.hobbies || ""} onChange={(e) => setTempInfo({...tempInfo, hobbies: e.target.value})} />
               </div>
 
               {/* Social Links Inputs */}
@@ -326,21 +359,21 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-slate-600 mb-0.5">Facebook</label>
-                    <input type="url" placeholder="https://facebook.com/..." className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-[11px]" value={tempInfo.facebook} onChange={(e) => setTempInfo({...tempInfo, facebook: e.target.value})} />
+                    <input type="url" placeholder="https://facebook.com/..." className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-[11px]" value={tempInfo.facebook || ""} onChange={(e) => setTempInfo({...tempInfo, facebook: e.target.value})} />
                   </div>
                   <div>
                     <label className="block text-slate-600 mb-0.5">Instagram</label>
-                    <input type="url" placeholder="https://instagram.com/..." className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-[11px]" value={tempInfo.instagram} onChange={(e) => setTempInfo({...tempInfo, instagram: e.target.value})} />
+                    <input type="url" placeholder="https://instagram.com/..." className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-[11px]" value={tempInfo.instagram || ""} onChange={(e) => setTempInfo({...tempInfo, instagram: e.target.value})} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-slate-600 mb-0.5">X (Twitter)</label>
-                    <input type="url" placeholder="https://x.com/..." className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-[11px]" value={tempInfo.xLink} onChange={(e) => setTempInfo({...tempInfo, xLink: e.target.value})} />
+                    <input type="url" placeholder="https://x.com/..." className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-[11px]" value={tempInfo.xLink || ""} onChange={(e) => setTempInfo({...tempInfo, xLink: e.target.value})} />
                   </div>
                   <div>
                     <label className="block text-slate-600 mb-0.5">LinkedIn</label>
-                    <input type="url" placeholder="https://linkedin.com/..." className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-[11px]" value={tempInfo.linkedin} onChange={(e) => setTempInfo({...tempInfo, linkedin: e.target.value})} />
+                    <input type="url" placeholder="https://linkedin.com/..." className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-[11px]" value={tempInfo.linkedin || ""} onChange={(e) => setTempInfo({...tempInfo, linkedin: e.target.value})} />
                   </div>
                 </div>
               </div>
@@ -363,7 +396,8 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
 
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

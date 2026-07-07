@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 function EyeIcon() {
@@ -50,6 +51,7 @@ function getStrength(password: string): { score: number; label: string; color: s
 }
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,9 +68,40 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.fullName || !form.email || !form.password) {
+      alert("Please fill in all fields.");
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setIsLoading(false);
+    try {
+      const res = await fetch("http://localhost:5276/api/Auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: form.fullName,
+          email: form.email,
+          password: form.password
+        })
+      });
+
+      if (res.ok) {
+        alert("Registration successful! Redirecting to sign in.");
+        router.push("/sign-in");
+      } else {
+        const errMsg = await res.text();
+        alert(errMsg || "Registration failed. Please check your credentials.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("A connection error occurred. Make sure the API server is running.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -280,14 +313,6 @@ export default function SignUpPage() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="divider my-5">or</div>
-
-          {/* Google */}
-          <button type="button" className="btn-google">
-            <GoogleIcon />
-            <span>Sign up with Google</span>
-          </button>
         </div>
 
         {/* Footer */}

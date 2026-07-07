@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface SSCHSCDetails {
   institution: string;
@@ -45,6 +46,7 @@ interface EducationTabProps {
   setEducationGraduate: (val: GraduateDetails) => void;
   educationPostGraduate: PostGraduateDetails;
   setEducationPostGraduate: (val: PostGraduateDetails) => void;
+  onSave: (updatedData: any) => Promise<boolean>;
 }
 
 export default function EducationTab({
@@ -58,8 +60,14 @@ export default function EducationTab({
   setEducationGraduate,
   educationPostGraduate,
   setEducationPostGraduate,
+  onSave,
 }: EducationTabProps) {
   const [isEduEditModalOpen, setIsEduEditModalOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const [tempSSC, setTempSSC] = useState<SSCHSCDetails>({ ...educationSSC });
   const [tempHSC, setTempHSC] = useState<SSCHSCDetails>({ ...educationHSC });
   const [tempDiploma, setTempDiploma] = useState<DiplomaDetails>({ ...educationDiploma });
@@ -215,7 +223,7 @@ export default function EducationTab({
       </div>
 
       {/* Education Edit Modal */}
-      {isEduEditModalOpen && (
+      {isMounted && isEduEditModalOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-sm w-full my-8 p-5 shadow-2xl border border-slate-100 flex flex-col space-y-4 max-h-[85vh] overflow-y-auto scrollbar-none animate-fade-in">
             <div>
@@ -225,14 +233,20 @@ export default function EducationTab({
               <p className="text-[10px] text-slate-500 mt-1">Configure your educational details across the 5 standard levels.</p>
             </div>
 
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
-              setEducationSSC(tempSSC);
-              setEducationHSC(tempHSC);
-              setEducationDiploma(tempDiploma);
-              setEducationGraduate(tempGraduate);
-              setEducationPostGraduate(tempPostGraduate);
-              setIsEduEditModalOpen(false);
+              const success = await onSave({
+                educationSSC: tempSSC,
+                educationHSC: tempHSC,
+                educationDiploma: tempDiploma,
+                educationGraduate: tempGraduate,
+                educationPostGraduate: tempPostGraduate
+              });
+              if (success) {
+                setIsEduEditModalOpen(false);
+              } else {
+                alert("Failed to save education details. Please try again.");
+              }
             }} className="space-y-5 text-xs">
 
               {/* SSC Section Form */}
@@ -240,14 +254,14 @@ export default function EducationTab({
                 <h4 className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Secondary School Certificate (SSC)</h4>
                 <div>
                   <label className="block text-slate-600 mb-0.5">Institution</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempSSC.institution} onChange={(e) => setTempSSC({ ...tempSSC, institution: e.target.value })} />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempSSC.institution || ""} onChange={(e) => setTempSSC({ ...tempSSC, institution: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-slate-600 mb-0.5">Board/Division</label>
                     <select
                       className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs"
-                      value={tempSSC.division}
+                      value={tempSSC.division || ""}
                       onChange={(e) => setTempSSC({ ...tempSSC, division: e.target.value })}
                     >
                       <option value="Barishal">Barishal</option>
@@ -264,7 +278,7 @@ export default function EducationTab({
                     <label className="block text-slate-600 mb-0.5">Group</label>
                     <select
                       className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs"
-                      value={tempSSC.group}
+                      value={tempSSC.group || ""}
                       onChange={(e) => setTempSSC({ ...tempSSC, group: e.target.value })}
                     >
                       <option value="Science">Science</option>
@@ -276,11 +290,11 @@ export default function EducationTab({
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-slate-600 mb-0.5">Passed Year</label>
-                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempSSC.yearPassed} onChange={(e) => setTempSSC({ ...tempSSC, yearPassed: e.target.value })} />
+                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempSSC.yearPassed || ""} onChange={(e) => setTempSSC({ ...tempSSC, yearPassed: e.target.value })} />
                   </div>
                   <div>
                     <label className="block text-slate-600 mb-0.5">GPA (Out of 5)</label>
-                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempSSC.gpa} onChange={(e) => setTempSSC({ ...tempSSC, gpa: e.target.value })} />
+                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempSSC.gpa || ""} onChange={(e) => setTempSSC({ ...tempSSC, gpa: e.target.value })} />
                   </div>
                 </div>
               </div>
@@ -290,14 +304,14 @@ export default function EducationTab({
                 <h4 className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Higher Secondary Certificate (HSC)</h4>
                 <div>
                   <label className="block text-slate-600 mb-0.5">Institution</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempHSC.institution} onChange={(e) => setTempHSC({ ...tempHSC, institution: e.target.value })} />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempHSC.institution || ""} onChange={(e) => setTempHSC({ ...tempHSC, institution: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-slate-600 mb-0.5">Board/Division</label>
                     <select
                       className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs"
-                      value={tempHSC.division}
+                      value={tempHSC.division || ""}
                       onChange={(e) => setTempHSC({ ...tempHSC, division: e.target.value })}
                     >
                       <option value="Barishal">Barishal</option>
@@ -314,7 +328,7 @@ export default function EducationTab({
                     <label className="block text-slate-600 mb-0.5">Group</label>
                     <select
                       className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs"
-                      value={tempHSC.group}
+                      value={tempHSC.group || ""}
                       onChange={(e) => setTempHSC({ ...tempHSC, group: e.target.value })}
                     >
                       <option value="Science">Science</option>
@@ -326,11 +340,11 @@ export default function EducationTab({
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-slate-600 mb-0.5">Passed Year</label>
-                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempHSC.yearPassed} onChange={(e) => setTempHSC({ ...tempHSC, yearPassed: e.target.value })} />
+                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempHSC.yearPassed || ""} onChange={(e) => setTempHSC({ ...tempHSC, yearPassed: e.target.value })} />
                   </div>
                   <div>
                     <label className="block text-slate-600 mb-0.5">GPA (Out of 5)</label>
-                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempHSC.gpa} onChange={(e) => setTempHSC({ ...tempHSC, gpa: e.target.value })} />
+                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempHSC.gpa || ""} onChange={(e) => setTempHSC({ ...tempHSC, gpa: e.target.value })} />
                   </div>
                 </div>
               </div>
@@ -340,16 +354,16 @@ export default function EducationTab({
                 <h4 className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Diploma</h4>
                 <div>
                   <label className="block text-slate-600 mb-0.5">Institution</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" placeholder="e.g. Dhaka Polytechnic Institute" value={tempDiploma.institution} onChange={(e) => setTempDiploma({ ...tempDiploma, institution: e.target.value })} />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" placeholder="e.g. Dhaka Polytechnic Institute" value={tempDiploma.institution || ""} onChange={(e) => setTempDiploma({ ...tempDiploma, institution: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-slate-600 mb-0.5">Passed Year</label>
-                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempDiploma.yearPassed} onChange={(e) => setTempDiploma({ ...tempDiploma, yearPassed: e.target.value })} />
+                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempDiploma.yearPassed || ""} onChange={(e) => setTempDiploma({ ...tempDiploma, yearPassed: e.target.value })} />
                   </div>
                   <div>
                     <label className="block text-slate-600 mb-0.5">CGPA</label>
-                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempDiploma.cgpa} onChange={(e) => setTempDiploma({ ...tempDiploma, cgpa: e.target.value })} />
+                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempDiploma.cgpa || ""} onChange={(e) => setTempDiploma({ ...tempDiploma, cgpa: e.target.value })} />
                   </div>
                 </div>
               </div>
@@ -359,14 +373,14 @@ export default function EducationTab({
                 <h4 className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Graduate</h4>
                 <div>
                   <label className="block text-slate-600 mb-0.5">Institution</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempGraduate.institution} onChange={(e) => setTempGraduate({ ...tempGraduate, institution: e.target.value })} />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempGraduate.institution || ""} onChange={(e) => setTempGraduate({ ...tempGraduate, institution: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-1">
                     <label className="block text-slate-600 mb-0.5">Degree</label>
                     <select
                       className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs"
-                      value={tempGraduate.degree}
+                      value={tempGraduate.degree || ""}
                       onChange={(e) => setTempGraduate({ ...tempGraduate, degree: e.target.value })}
                     >
                       <option value="">Select</option>
@@ -380,16 +394,16 @@ export default function EducationTab({
                   </div>
                   <div>
                     <label className="block text-slate-600 mb-0.5">Passed Year</label>
-                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempGraduate.passedYear} onChange={(e) => setTempGraduate({ ...tempGraduate, passedYear: e.target.value })} />
+                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempGraduate.passedYear || ""} onChange={(e) => setTempGraduate({ ...tempGraduate, passedYear: e.target.value })} />
                   </div>
                   <div>
                     <label className="block text-slate-600 mb-0.5">CGPA / Result</label>
-                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempGraduate.result} onChange={(e) => setTempGraduate({ ...tempGraduate, result: e.target.value })} />
+                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempGraduate.result || ""} onChange={(e) => setTempGraduate({ ...tempGraduate, result: e.target.value })} />
                   </div>
                 </div>
                 <div>
                   <label className="block text-slate-600 mb-0.5">Achievement Notes</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" placeholder="Awards or special honors" value={tempGraduate.achievement} onChange={(e) => setTempGraduate({ ...tempGraduate, achievement: e.target.value })} />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" placeholder="Awards or special honors" value={tempGraduate.achievement || ""} onChange={(e) => setTempGraduate({ ...tempGraduate, achievement: e.target.value })} />
                 </div>
                 <div>
                   <label className="block text-slate-600 mb-0.5">Achievement File (PDF/Image)</label>
@@ -415,14 +429,14 @@ export default function EducationTab({
                 <h4 className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Post Graduate</h4>
                 <div>
                   <label className="block text-slate-600 mb-0.5">Institution</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" placeholder="e.g. North South University" value={tempPostGraduate.institution} onChange={(e) => setTempPostGraduate({ ...tempPostGraduate, institution: e.target.value })} />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" placeholder="e.g. North South University" value={tempPostGraduate.institution || ""} onChange={(e) => setTempPostGraduate({ ...tempPostGraduate, institution: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-1">
                     <label className="block text-slate-600 mb-0.5">Degree</label>
                     <select
                       className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs"
-                      value={tempPostGraduate.degree}
+                      value={tempPostGraduate.degree || ""}
                       onChange={(e) => setTempPostGraduate({ ...tempPostGraduate, degree: e.target.value })}
                     >
                       <option value="">Select</option>
@@ -436,16 +450,16 @@ export default function EducationTab({
                   </div>
                   <div>
                     <label className="block text-slate-600 mb-0.5">Passed Year</label>
-                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempPostGraduate.passedYear} onChange={(e) => setTempPostGraduate({ ...tempPostGraduate, passedYear: e.target.value })} />
+                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempPostGraduate.passedYear || ""} onChange={(e) => setTempPostGraduate({ ...tempPostGraduate, passedYear: e.target.value })} />
                   </div>
                   <div>
                     <label className="block text-slate-600 mb-0.5">CGPA / Result</label>
-                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempPostGraduate.result} onChange={(e) => setTempPostGraduate({ ...tempPostGraduate, result: e.target.value })} />
+                    <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" value={tempPostGraduate.result || ""} onChange={(e) => setTempPostGraduate({ ...tempPostGraduate, result: e.target.value })} />
                   </div>
                 </div>
                 <div>
                   <label className="block text-slate-600 mb-0.5">Achievement Notes</label>
-                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" placeholder="Thesis awards, honors, etc." value={tempPostGraduate.achievement} onChange={(e) => setTempPostGraduate({ ...tempPostGraduate, achievement: e.target.value })} />
+                  <input type="text" className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-1 text-xs" placeholder="Thesis awards, honors, etc." value={tempPostGraduate.achievement || ""} onChange={(e) => setTempPostGraduate({ ...tempPostGraduate, achievement: e.target.value })} />
                 </div>
                 <div>
                   <label className="block text-slate-600 mb-0.5">Achievement File (PDF/Image)</label>
@@ -485,7 +499,8 @@ export default function EducationTab({
 
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

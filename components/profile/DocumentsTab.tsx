@@ -21,6 +21,7 @@ interface DocumentsTabProps {
   setDocPayslip: (val: string | null) => void;
   docTax: string | null;
   setDocTax: (val: string | null) => void;
+  onSave: (updatedData: any) => Promise<boolean>;
 }
 
 export default function DocumentsTab({
@@ -42,20 +43,27 @@ export default function DocumentsTab({
   setDocPayslip,
   docTax,
   setDocTax,
+  onSave,
 }: DocumentsTabProps) {
 
-  const handleLocalUpload = (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
+  const handleLocalUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (key === "resume") setDocResume(file.name);
-      else if (key === "nidEmpFront") setDocNidEmpFront(file.name);
-      else if (key === "nidEmpBack") setDocNidEmpBack(file.name);
-      else if (key === "nidNomFront") setDocNidNomFront(file.name);
-      else if (key === "nidNomBack") setDocNidNomBack(file.name);
-      else if (key === "covid") setDocCovid(file.name);
-      else if (key === "release") setDocRelease(file.name);
-      else if (key === "payslip") setDocPayslip(file.name);
-      else if (key === "tax") setDocTax(file.name);
+      const payloadDocs = {
+        resume: key === "resume" ? file.name : docResume,
+        nidEmpFront: key === "nidEmpFront" ? file.name : docNidEmpFront,
+        nidEmpBack: key === "nidEmpBack" ? file.name : docNidEmpBack,
+        nidNomFront: key === "nidNomFront" ? file.name : docNidNomFront,
+        nidNomBack: key === "nidNomBack" ? file.name : docNidNomBack,
+        covid: key === "covid" ? file.name : docCovid,
+        release: key === "release" ? file.name : docRelease,
+        payslip: key === "payslip" ? file.name : docPayslip,
+        tax: key === "tax" ? file.name : docTax
+      };
+      const success = await onSave({ documents: payloadDocs });
+      if (!success) {
+        alert("Failed to save uploaded document name. Please try again.");
+      }
     }
   };
 
