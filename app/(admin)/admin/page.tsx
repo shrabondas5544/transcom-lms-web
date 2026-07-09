@@ -49,6 +49,78 @@ export default function AdminDashboardPage() {
   
   const PAGE_SIZE = 10;
 
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      const res = await fetch("http://localhost:5276/api/EmployeeProfile");
+      if (res.ok) {
+        const data = await res.json();
+        setEmployees(data);
+      }
+    } catch (err) {
+      console.error("Error fetching employees from database:", err);
+    }
+  };
+
+  const saveImportedEmployees = async (parsedList: any[]) => {
+    try {
+      const res = await fetch("http://localhost:5276/api/EmployeeProfile/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsedList)
+      });
+      if (res.ok) {
+        await fetchEmployees();
+        alert("Employee records imported and saved to the database successfully!");
+      } else {
+        const errMsg = await res.text();
+        alert(`Failed to save records (HTTP ${res.status}): ${errMsg || "No response body returned. If it is a 404, please restart the dotnet run terminal command to load the new backend import endpoint."}`);
+      }
+    } catch (err) {
+      console.error("Import error:", err);
+      alert("A network error occurred while importing records.");
+    }
+  };
+
+  const formatExcelDate = (val: any): string => {
+    if (!val) return "";
+    
+    if (val instanceof Date) {
+      if (isNaN(val.getTime())) return "";
+      return val.toISOString().split('T')[0];
+    }
+    
+    if (typeof val === 'number' || (!isNaN(Number(val)) && !isNaN(parseFloat(val)))) {
+      const serial = Number(val);
+      const date = new Date(Math.round((serial - 25569) * 86400 * 1000));
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    }
+    
+    const str = String(val).trim();
+    if (!str || str.toLowerCase() === "n/a") return "";
+    
+    // Check if it's confirm date random number fallback (sometimes Excel dates parsed as numbers but in string type)
+    if (/^\d{5}$/.test(str)) {
+      const serial = Number(str);
+      const date = new Date(Math.round((serial - 25569) * 86400 * 1000));
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    }
+
+    const parsedDate = new Date(str);
+    if (!isNaN(parsedDate.getTime())) {
+      return parsedDate.toISOString().split('T')[0];
+    }
+    
+    return str;
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -57,7 +129,7 @@ export default function AdminDashboardPage() {
     reader.onload = (evt) => {
       try {
         const bstr = evt.target?.result;
-        const workbook = XLSX.read(bstr, { type: "binary" });
+        const workbook = XLSX.read(bstr, { type: "binary", cellDates: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const rawData = XLSX.utils.sheet_to_json(worksheet);
@@ -68,33 +140,62 @@ export default function AdminDashboardPage() {
         }
 
         const parsed = rawData.map((row: any) => {
+          const findRawVal = (prefixes: string[]) => {
+            const keys = Object.keys(row);
+            // 1. Exact match
+            for (const key of keys) {
+              const cleanedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+              for (const p of prefixes) {
+                const cleanedPrefix = p.toLowerCase().replace(/[^a-z0-9]/g, "");
+                if (cleanedKey === cleanedPrefix) {
+                  return row[key];
+                }
+              }
+            }
+            // 2. StartsWith match
+            for (const key of keys) {
+              const cleanedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+              for (const p of prefixes) {
+                const cleanedPrefix = p.toLowerCase().replace(/[^a-z0-9]/g, "");
+                if (cleanedKey.startsWith(cleanedPrefix)) {
+                  return row[key];
+                }
+              }
+            }
+            // 3. Includes match
+            for (const key of keys) {
+              const cleanedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+              for (const p of prefixes) {
+                const cleanedPrefix = p.toLowerCase().replace(/[^a-z0-9]/g, "");
+                if (cleanedKey.includes(cleanedPrefix)) {
+                  return row[key];
+                }
+              }
+            }
+            return null;
+          };
+
           const findVal = (prefixes: string[]) => {
-            const key = Object.keys(row).find(k => 
-              prefixes.some(p => k.toLowerCase().replace(/[^a-z0-9]/g, "").includes(p.toLowerCase().replace(/[^a-z0-9]/g, "")))
-            );
-            return key ? String(row[key]).trim() : "";
+            const raw = findRawVal(prefixes);
+            return raw !== null && raw !== undefined ? String(raw).trim() : "";
           };
 
           const code = findVal(["id", "code", "empid"]);
           const name = findVal(["name", "empname"]);
           const department = findVal(["department", "departement", "dept"]);
           const empStat = findVal(["empstat", "status", "employmentstatus"]);
-          const doj = findVal(["doj", "dateofjoining", "joiningdate"]);
+          const dojVal = findRawVal(["doj", "dateofjoining", "joiningdate"]);
           const gradeGroup = findVal(["gradegroup", "gradegroup", "group"]);
           const designation = findVal(["designation", "desig", "role"]);
           const jobGrade = findVal(["jobgrade", "grade"]);
-          const dob = findVal(["dob", "dateofbirth", "birthdate"]);
+          const dobVal = findRawVal(["dob", "dateofbirth", "birthdate"]);
           const eqGrade = findVal(["eqgrade", "eqgrade"]);
           const locationOutlet = findVal(["locationoutlet", "location", "outlet", "showroom"]);
-          const confirmDate = findVal(["confirmdate", "confirmationdate"]);
+          const confirmDateVal = findRawVal(["confirmdate", "confirmationdate"]);
 
-          // Calculate profile completion consistently based on name hash
-          let completion = 0;
-          if (name) {
-            const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            const percentages = [0, 25, 45, 75, 100];
-            completion = percentages[hash % percentages.length];
-          }
+          const doj = formatExcelDate(dojVal);
+          const dob = formatExcelDate(dobVal);
+          const confirmDate = formatExcelDate(confirmDateVal);
 
           return {
             code: code || `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -108,12 +209,11 @@ export default function AdminDashboardPage() {
             dob: dob || "N/A",
             eqGrade: eqGrade || "N/A",
             locationOutlet: locationOutlet || "N/A",
-            confirmDate: confirmDate || "N/A",
-            completion
+            confirmDate: confirmDate || "N/A"
           };
         });
 
-        setEmployees(parsed);
+        saveImportedEmployees(parsed);
         setSelectedEmployee(null); // Clear selected employee on new file upload
         setPage(1);
       } catch (err) {
@@ -291,16 +391,23 @@ export default function AdminDashboardPage() {
                 {pageRows.map((emp) => (
                   <tr key={emp.code} className={`hover:bg-slate-50/30 transition-colors group ${selectedEmployee?.code === emp.code ? "bg-red-50/10" : ""}`}>
                     <td className="px-5 py-3.5 flex items-center gap-2">
-                      <button 
-                        onClick={() => setSelectedEmployee(emp)} 
-                        className={`p-1 rounded-lg transition-colors cursor-pointer ${selectedEmployee?.code === emp.code ? "bg-red-100 text-red-650" : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"}`}
-                        title="Show Details in Side Panel"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                          <circle cx="12" cy="7" r="4" />
-                        </svg>
-                      </button>
+                      <div className="relative flex items-center">
+                        <button 
+                          onClick={() => setSelectedEmployee(emp)} 
+                          className={`p-1 rounded-lg transition-colors cursor-pointer ${selectedEmployee?.code === emp.code ? "bg-red-100 text-red-650" : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"}`}
+                          title="Show Details in Side Panel"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                          </svg>
+                        </button>
+                        {emp.isVerified && (
+                          <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500 border border-white text-white shadow-sm" title="Verified Profile">
+                            <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12" /></svg>
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs font-mono font-bold text-slate-800">{emp.code}</span>
                     </td>
                     <td className="px-5 py-3.5">
@@ -453,6 +560,31 @@ export default function AdminDashboardPage() {
                   <span className="text-[9px] text-slate-450 font-bold mt-0.5">Profile Completion Progress</span>
                 </div>
                 <CompletionRing percent={selectedEmployee.completion} />
+              </div>
+
+              {/* Verification Status */}
+              <div className={`p-3 rounded-xl border flex items-center gap-2.5 ${
+                selectedEmployee.completion === 100
+                  ? "bg-emerald-50/50 border-emerald-200"
+                  : "bg-amber-50/50 border-amber-200"
+              }`}>
+                {selectedEmployee.completion === 100 ? (
+                  <>
+                    <svg className="text-emerald-600 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-emerald-700 block">Profile Verified</span>
+                      <span className="text-[9px] text-emerald-600 font-medium">NID & documents verified</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <svg className="text-amber-600 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-amber-700 block">Unverified</span>
+                      <span className="text-[9px] text-amber-600 font-medium">Pending NID & document upload</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ) : (

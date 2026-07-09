@@ -62,6 +62,9 @@ export default function SignInPage() {
         sessionStorage.setItem("employeeProfileId", data.id.toString());
         sessionStorage.setItem("employeeName", data.name);
         sessionStorage.setItem("employeeCode", data.employeeCode);
+        sessionStorage.setItem("employeeDesignation", data.designation || "");
+        sessionStorage.setItem("employeeShowroom", data.showroom || "");
+        sessionStorage.setItem("employeeIsVerified", data.isVerified ? "true" : "false");
         
         router.push("/employee/profile");
       } else {

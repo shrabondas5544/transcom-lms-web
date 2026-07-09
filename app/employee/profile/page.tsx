@@ -205,7 +205,7 @@ export default function EmployeeProfilePage() {
             phone: data.phone,
             email: data.email,
             nationality: data.nationality,
-            maritalStatus: data.maritalStatus,
+            maritalStatus: data.maritalStatus || "",
             marriageDate: data.marriageDate || "",
             religion: data.religion,
             sex: data.sex,
@@ -216,7 +216,11 @@ export default function EmployeeProfilePage() {
             facebook: data.facebook,
             instagram: data.instagram,
             xLink: data.xLink,
-            linkedin: data.linkedin
+            linkedin: data.linkedin,
+            designation: data.designation || "",
+            showroom: data.showroom || "",
+            employeeCode: data.employeeCode || "",
+            department: data.department || ""
           });
           if (data.educationSSC) setEducationSSC(data.educationSSC);
           if (data.educationHSC) setEducationHSC(data.educationHSC);
@@ -296,7 +300,7 @@ export default function EmployeeProfilePage() {
     phone: "",
     email: "",
     nationality: "",
-    maritalStatus: "Single",
+    maritalStatus: "",
     marriageDate: "",
     religion: "",
     sex: "",
@@ -307,7 +311,11 @@ export default function EmployeeProfilePage() {
     facebook: "",
     instagram: "",
     xLink: "",
-    linkedin: ""
+    linkedin: "",
+    designation: "",
+    showroom: "",
+    employeeCode: "",
+    department: ""
   });
 
   const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false);
@@ -372,10 +380,17 @@ export default function EmployeeProfilePage() {
   // Dynamically calculate profile completion percentage
   const getProfileCompletion = () => {
     let total = 0;
-    if (avatarImage) total += 10;
+    // 10% weight is given for account registration / being signed up
+    total += 10;
+
+    const isDobValid = personalInfo.dob && 
+                       !personalInfo.dob.startsWith("1970-01-01") && 
+                       !personalInfo.dob.startsWith("1969-12-31") && 
+                       personalInfo.dob !== "Not Set";
+
     const personalFields = [
       personalInfo.name, personalInfo.fatherName, personalInfo.motherName, 
-      personalInfo.presentAddress, personalInfo.permanentAddress, personalInfo.dob, 
+      personalInfo.presentAddress, personalInfo.permanentAddress, isDobValid ? "valid" : "", 
       personalInfo.phone, personalInfo.email, personalInfo.nationality, 
       personalInfo.religion, personalInfo.sex, personalInfo.bloodType, personalInfo.nid
     ];
@@ -394,6 +409,13 @@ export default function EmployeeProfilePage() {
   };
 
   const completionPercent = getProfileCompletion();
+
+  // Dynamically compute verification status: NID filled + NID front & back documents uploaded
+  const isVerified = Boolean(
+    personalInfo.nid && personalInfo.nid.length >= 10 &&
+    docNidEmpFront &&
+    docNidEmpBack
+  );
 
   const ratingConfig = getRatingConfig(mockEmployee.performance.overallScore);
 
@@ -611,18 +633,27 @@ export default function EmployeeProfilePage() {
 
             {/* Info details */}
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold text-slate-900 truncate" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
-                {personalInfo.name}
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-1.5" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
+                <span className="truncate">{personalInfo.name || "My Name"}</span>
+                {isVerified && (
+                  <svg className="text-emerald-500 fill-emerald-50 shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                )}
               </h2>
-              <p className="text-xs font-semibold text-red-600 mb-1">{mockEmployee.designation}</p>
+              <p className="text-xs font-semibold text-red-650 mb-1">
+                {personalInfo.designation || "Sales Associate"}
+                {personalInfo.department && ` · ${personalInfo.department}`}
+              </p>
               <p className="text-xs text-slate-500 flex items-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                {mockEmployee.showroom.replace("Transcom Digital - ", "")}
+                {personalInfo.showroom ? personalInfo.showroom.replace("Transcom Digital - ", "") : "Dhaka Showroom"}
               </p>
-              <p className="text-[11px] text-slate-400 mt-1">ID: {mockEmployee.id}</p>
+              <p className="text-[11px] text-slate-400 mt-1">ID: {personalInfo.employeeCode || "N/A"}</p>
             </div>
           </div>
 

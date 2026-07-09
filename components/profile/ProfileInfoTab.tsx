@@ -158,7 +158,7 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
           <div className="grid grid-cols-2 border-b border-slate-50 pb-2">
             <dt className="text-slate-400 font-medium">Marital Status</dt>
             <dd className="text-slate-800 font-semibold">
-              {personalInfo.maritalStatus}
+              {personalInfo.maritalStatus || "Not Set"}
               {personalInfo.maritalStatus === "Married" && personalInfo.marriageDate && (
                 <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
                   Marriage Date: {formatMarriageDate(personalInfo.marriageDate)}
@@ -168,15 +168,15 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
           </div>
           <div className="grid grid-cols-2 border-b border-slate-50 pb-2">
             <dt className="text-slate-400 font-medium">Religion</dt>
-            <dd className="text-slate-800 font-semibold">{personalInfo.religion}</dd>
+            <dd className="text-slate-800 font-semibold">{personalInfo.religion || "Not Set"}</dd>
           </div>
           <div className="grid grid-cols-2 border-b border-slate-50 pb-2">
             <dt className="text-slate-400 font-medium">Sex</dt>
-            <dd className="text-slate-800 font-semibold">{personalInfo.sex}</dd>
+            <dd className="text-slate-800 font-semibold">{personalInfo.sex || "Not Set"}</dd>
           </div>
           <div className="grid grid-cols-2 border-b border-slate-50 pb-2">
             <dt className="text-slate-400 font-medium">Blood Type</dt>
-            <dd className="text-slate-800 font-semibold">{personalInfo.bloodType}</dd>
+            <dd className="text-slate-800 font-semibold">{personalInfo.bloodType || "Not Set"}</dd>
           </div>
           <div className="grid grid-cols-2 border-b border-slate-50 pb-2">
             <dt className="text-slate-400 font-medium">National NID Num</dt>
@@ -378,6 +378,7 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Marital Status</label>
                   <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.maritalStatus || ""} onChange={(e) => setTempInfo({...tempInfo, maritalStatus: e.target.value})}>
+                    <option value="">Select...</option>
                     <option value="Single">Single</option>
                     <option value="Married">Married</option>
                     <option value="Divorced">Divorced</option>
@@ -395,6 +396,7 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Religion</label>
                   <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.religion || ""} onChange={(e) => setTempInfo({...tempInfo, religion: e.target.value})}>
+                    <option value="">Select...</option>
                     <option value="Muslim">Muslim</option>
                     <option value="Hindu">Hindu</option>
                     <option value="Buddhist">Buddhist</option>
@@ -404,6 +406,7 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Sex</label>
                   <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.sex || ""} onChange={(e) => setTempInfo({...tempInfo, sex: e.target.value})}>
+                    <option value="">Select...</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
@@ -412,6 +415,7 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
                 <div>
                   <label className="block text-slate-650 font-medium mb-1">Blood Type</label>
                   <select className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:outline-none py-2" value={tempInfo.bloodType || ""} onChange={(e) => setTempInfo({...tempInfo, bloodType: e.target.value})}>
+                    <option value="">Select...</option>
                     <option value="A+">A+</option>
                     <option value="A-">A-</option>
                     <option value="B+">B+</option>
