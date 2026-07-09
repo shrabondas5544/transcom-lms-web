@@ -73,6 +73,7 @@ export default function EducationTab({
   const [tempDiploma, setTempDiploma] = useState<DiplomaDetails>({ ...educationDiploma });
   const [tempGraduate, setTempGraduate] = useState<GraduateDetails>({ ...educationGraduate });
   const [tempPostGraduate, setTempPostGraduate] = useState<PostGraduateDetails>({ ...educationPostGraduate });
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, level: "grad" | "postgrad") => {
     const file = e.target.files?.[0];
@@ -100,6 +101,7 @@ export default function EducationTab({
               setTempDiploma({ ...educationDiploma });
               setTempGraduate({ ...educationGraduate });
               setTempPostGraduate({ ...educationPostGraduate });
+              setValidationError(null);
               setIsEduEditModalOpen(true);
             }}
             className="p-1.5 hover:bg-slate-100 rounded text-red-600 transition-all cursor-pointer"
@@ -233,8 +235,112 @@ export default function EducationTab({
               <p className="text-[10px] text-slate-500 mt-1">Configure your educational details across the 5 standard levels.</p>
             </div>
 
+            {validationError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-2.5 text-red-800 text-[11px] font-semibold flex items-center gap-2">
+                <svg className="text-red-500 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                {validationError}
+              </div>
+            )}
+
             <form onSubmit={async (e) => {
               e.preventDefault();
+              setValidationError(null);
+
+              // 1. Completeness Validation
+              const sscFields = [tempSSC.institution, tempSSC.division, tempSSC.group, tempSSC.yearPassed, tempSSC.gpa];
+              const sscFilledCount = sscFields.filter(f => !!f?.trim()).length;
+              const sscIsStarted = sscFilledCount > 0;
+              const sscIsComplete = sscFilledCount === sscFields.length;
+              if (sscIsStarted && !sscIsComplete) {
+                setValidationError("SSC section is incomplete. Please fill Institution, Board, Group, Passed Year, and GPA.");
+                return;
+              }
+
+              const hscFields = [tempHSC.institution, tempHSC.division, tempHSC.group, tempHSC.yearPassed, tempHSC.gpa];
+              const hscFilledCount = hscFields.filter(f => !!f?.trim()).length;
+              const hscIsStarted = hscFilledCount > 0;
+              const hscIsComplete = hscFilledCount === hscFields.length;
+              if (hscIsStarted && !hscIsComplete) {
+                setValidationError("HSC section is incomplete. Please fill Institution, Board, Group, Passed Year, and GPA.");
+                return;
+              }
+
+              const diplomaFields = [tempDiploma.institution, tempDiploma.yearPassed, tempDiploma.cgpa];
+              const diplomaIsStarted = diplomaFields.some(f => !!f?.trim());
+              const diplomaIsComplete = !!tempDiploma.institution?.trim();
+              if (diplomaIsStarted && !diplomaIsComplete) {
+                setValidationError("Diploma section requires at least the Institution to be filled.");
+                return;
+              }
+
+              const gradFields = [tempGraduate.institution, tempGraduate.degree, tempGraduate.passedYear, tempGraduate.result, tempGraduate.achievement, tempGraduate.achievementFile];
+              const gradIsStarted = gradFields.some(f => !!f?.trim());
+              const gradIsComplete = !!tempGraduate.institution?.trim() && !!tempGraduate.degree?.trim();
+              if (gradIsStarted && !gradIsComplete) {
+                setValidationError("Graduate section requires at least the Institution and Degree to be filled.");
+                return;
+              }
+
+              const postGradFields = [tempPostGraduate.institution, tempPostGraduate.degree, tempPostGraduate.passedYear, tempPostGraduate.result, tempPostGraduate.achievement, tempPostGraduate.achievementFile];
+              const postGradIsStarted = postGradFields.some(f => !!f?.trim());
+              const postGradIsComplete = !!tempPostGraduate.institution?.trim() && !!tempPostGraduate.degree?.trim();
+              if (postGradIsStarted && !postGradIsComplete) {
+                setValidationError("Post Graduate section requires at least the Institution and Degree to be filled.");
+                return;
+              }
+
+              // 2. Order/Sequence Validation (SSC < HSC < Diploma <= Graduate < Post Graduate)
+              if (hscIsStarted && !sscIsComplete) {
+                setValidationError("You must complete the SSC section before filling the HSC section.");
+                return;
+              }
+              if (diplomaIsStarted && !hscIsComplete) {
+                setValidationError("You must complete the HSC section before filling the Diploma section.");
+                return;
+              }
+              if (gradIsStarted && !hscIsComplete) {
+                setValidationError("You must complete the HSC section before filling the Graduate section.");
+                return;
+              }
+              if (postGradIsStarted && !gradIsComplete) {
+                setValidationError("You must complete the Graduate section before filling the Post Graduate section.");
+                return;
+              }
+
+              // 3. Chronological Passing Year Validation
+              const getYear = (y?: string) => {
+                if (!y) return null;
+                const parsed = parseInt(y.trim(), 10);
+                return isNaN(parsed) ? null : parsed;
+              };
+
+              const sscYear = getYear(tempSSC.yearPassed);
+              const hscYear = getYear(tempHSC.yearPassed);
+              const diplomaYear = getYear(tempDiploma.yearPassed);
+              const gradYear = getYear(tempGraduate.passedYear);
+              const postGradYear = getYear(tempPostGraduate.passedYear);
+
+              if (sscYear !== null && hscYear !== null && hscYear < sscYear) {
+                setValidationError(`HSC passing year (${hscYear}) cannot be less than SSC passing year (${sscYear}).`);
+                return;
+              }
+              if (hscYear !== null && diplomaYear !== null && diplomaYear < hscYear) {
+                setValidationError(`Diploma passing year (${diplomaYear}) cannot be less than HSC passing year (${hscYear}).`);
+                return;
+              }
+              if (hscYear !== null && gradYear !== null && gradYear < hscYear) {
+                setValidationError(`Graduate passing year (${gradYear}) cannot be less than HSC passing year (${hscYear}).`);
+                return;
+              }
+              if (gradYear !== null && postGradYear !== null && postGradYear < gradYear) {
+                setValidationError(`Post Graduate passing year (${postGradYear}) cannot be less than Graduate passing year (${gradYear}).`);
+                return;
+              }
+
               const success = await onSave({
                 educationSSC: tempSSC,
                 educationHSC: tempHSC,
@@ -264,6 +370,7 @@ export default function EducationTab({
                       value={tempSSC.division || ""}
                       onChange={(e) => setTempSSC({ ...tempSSC, division: e.target.value })}
                     >
+                      <option value="">Select Division</option>
                       <option value="Barishal">Barishal</option>
                       <option value="Chattogram">Chattogram</option>
                       <option value="Dhaka">Dhaka</option>
@@ -281,6 +388,7 @@ export default function EducationTab({
                       value={tempSSC.group || ""}
                       onChange={(e) => setTempSSC({ ...tempSSC, group: e.target.value })}
                     >
+                      <option value="">Select Group</option>
                       <option value="Science">Science</option>
                       <option value="Commerce">Commerce</option>
                       <option value="Arts">Arts</option>
@@ -314,6 +422,7 @@ export default function EducationTab({
                       value={tempHSC.division || ""}
                       onChange={(e) => setTempHSC({ ...tempHSC, division: e.target.value })}
                     >
+                      <option value="">Select Division</option>
                       <option value="Barishal">Barishal</option>
                       <option value="Chattogram">Chattogram</option>
                       <option value="Dhaka">Dhaka</option>
@@ -331,6 +440,7 @@ export default function EducationTab({
                       value={tempHSC.group || ""}
                       onChange={(e) => setTempHSC({ ...tempHSC, group: e.target.value })}
                     >
+                      <option value="">Select Group</option>
                       <option value="Science">Science</option>
                       <option value="Commerce">Commerce</option>
                       <option value="Arts">Arts</option>

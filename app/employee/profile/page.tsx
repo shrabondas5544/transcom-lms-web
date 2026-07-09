@@ -485,9 +485,26 @@ export default function EmployeeProfilePage() {
           setDocTax(updatedData.documents.tax);
         }
         return true;
+      } else {
+        const errorText = await res.text();
+        console.error("Save profile failed with status:", res.status, errorText);
+        try {
+          const errObj = JSON.parse(errorText);
+          if (errObj.errors) {
+            const messages = Object.values(errObj.errors).flat().join("\n");
+            alert(`Validation failed:\n${messages}`);
+          } else if (errObj.message) {
+            alert(`Error: ${errObj.message}`);
+          } else {
+            alert(`Error: ${errorText}`);
+          }
+        } catch {
+          alert(`Error: ${errorText || "Unknown API error"}`);
+        }
       }
     } catch (err) {
       console.error("Error saving profile update:", err);
+      alert("A network error occurred. Please check if the backend API is running.");
     }
     return false;
   };
