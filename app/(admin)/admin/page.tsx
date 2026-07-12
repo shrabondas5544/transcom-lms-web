@@ -55,10 +55,11 @@ export default function AdminDashboardPage() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await fetch("http://localhost:5276/api/EmployeeProfile");
+      const res = await fetch("http://localhost:5276/api/EmployeeProfile?page=1&pageSize=10000");
       if (res.ok) {
         const data = await res.json();
-        setEmployees(data);
+        // API returns paginated wrapper: { items: [...], totalCount, ... }
+        setEmployees(Array.isArray(data) ? data : (data.items ?? []));
       }
     } catch (err) {
       console.error("Error fetching employees from database:", err);
@@ -226,13 +227,14 @@ export default function AdminDashboardPage() {
   };
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return employees;
+    const list = Array.isArray(employees) ? employees : [];
+    if (!search.trim()) return list;
     const q = search.toLowerCase();
-    return employees.filter(e =>
-      e.name.toLowerCase().includes(q) ||
-      e.code.toLowerCase().includes(q) ||
-      e.locationOutlet.toLowerCase().includes(q) ||
-      e.designation.toLowerCase().includes(q)
+    return list.filter(e =>
+      (e.name || "").toLowerCase().includes(q) ||
+      (e.code || "").toLowerCase().includes(q) ||
+      (e.locationOutlet || "").toLowerCase().includes(q) ||
+      (e.designation || "").toLowerCase().includes(q)
     );
   }, [employees, search]);
 

@@ -49,7 +49,7 @@ const formatMarriageDate = (dateStr?: string) => {
 
 interface ProfileInfoTabProps {
   personalInfo: PersonalInfo;
-  setPersonalInfo: (info: PersonalInfo) => void;
+  setPersonalInfo: (info: any) => void;
   mockEmployee: {
     department: string;
     category: string;
@@ -57,9 +57,10 @@ interface ProfileInfoTabProps {
     designation: string;
   };
   onSave: (updatedData: any) => Promise<boolean>;
+  readOnly?: boolean;
 }
 
-export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmployee, onSave }: ProfileInfoTabProps) {
+export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmployee, onSave, readOnly }: ProfileInfoTabProps) {
   const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false);
   const [tempInfo, setTempInfo] = useState<PersonalInfo>({ ...personalInfo });
   const [firstName, setFirstName] = useState("");
@@ -92,27 +93,29 @@ export default function ProfileInfoTab({ personalInfo, setPersonalInfo, mockEmpl
       {/* Employee Master Data */}
       <div className="auth-card p-5">
         <div className="flex items-center gap-2.5 border-b border-slate-100 pb-2.5 mb-4">
-          <button
-            onClick={() => {
-              const isDefaultDob = personalInfo.dob === "1970-01-01" || personalInfo.dob === "1969-12-31";
-              setTempInfo({
-                ...personalInfo,
-                dob: isDefaultDob ? "" : personalInfo.dob
-              });
-              const nameParts = (personalInfo.name || "").trim().split(/\s+/);
-              setFirstName(nameParts[0] || "");
-              setLastName(nameParts.slice(1).join(" ") || "");
-              setValidationError(null);
-              setIsProfileEditModalOpen(true);
-            }}
-            className="p-1 hover:bg-slate-100 rounded text-red-600 transition-all cursor-pointer"
-            title="Edit personal information"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-          </button>
+          {!readOnly && (
+            <button
+              onClick={() => {
+                const isDefaultDob = personalInfo.dob === "1970-01-01" || personalInfo.dob === "1969-12-31";
+                setTempInfo({
+                  ...personalInfo,
+                  dob: isDefaultDob ? "" : personalInfo.dob
+                });
+                const nameParts = (personalInfo.name || "").trim().split(/\s+/);
+                setFirstName(nameParts[0] || "");
+                setLastName(nameParts.slice(1).join(" ") || "");
+                setValidationError(null);
+                setIsProfileEditModalOpen(true);
+              }}
+              className="p-1 hover:bg-slate-100 rounded text-red-600 transition-all cursor-pointer"
+              title="Edit personal information"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+            </button>
+          )}
           <h3 className="text-sm font-bold text-slate-900" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
             Profile Information
           </h3>

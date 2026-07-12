@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { useState } from "react";
 
 interface DocumentsTabProps {
   docResume: string | null;
@@ -22,6 +22,7 @@ interface DocumentsTabProps {
   docTax: string | null;
   setDocTax: (val: string | null) => void;
   onSave: (updatedData: any) => Promise<boolean>;
+  readOnly?: boolean;
 }
 
 export default function DocumentsTab({
@@ -44,6 +45,7 @@ export default function DocumentsTab({
   docTax,
   setDocTax,
   onSave,
+  readOnly,
 }: DocumentsTabProps) {
 
   const handleLocalUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
@@ -60,16 +62,25 @@ export default function DocumentsTab({
         payslip: key === "payslip" ? file.name : docPayslip,
         tax: key === "tax" ? file.name : docTax
       };
+
       const success = await onSave({ documents: payloadDocs });
-      if (!success) {
-        alert("Failed to save uploaded document name. Please try again.");
+      if (success) {
+        if (key === "resume") setDocResume(file.name);
+        else if (key === "nidEmpFront") setDocNidEmpFront(file.name);
+        else if (key === "nidEmpBack") setDocNidEmpBack(file.name);
+        else if (key === "nidNomFront") setDocNidNomFront(file.name);
+        else if (key === "nidNomBack") setDocNidNomBack(file.name);
+        else if (key === "covid") setDocCovid(file.name);
+        else if (key === "release") setDocRelease(file.name);
+        else if (key === "payslip") setDocPayslip(file.name);
+        else if (key === "tax") setDocTax(file.name);
       }
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* Hidden inputs self-contained */}
+      {/* Hidden File Inputs for Document Tab */}
       <input type="file" id="file-resume" accept="application/pdf" className="hidden" onChange={(e) => handleLocalUpload(e, "resume")} />
       <input type="file" id="file-nid-emp-front" accept="image/*" className="hidden" onChange={(e) => handleLocalUpload(e, "nidEmpFront")} />
       <input type="file" id="file-nid-emp-back" accept="image/*" className="hidden" onChange={(e) => handleLocalUpload(e, "nidEmpBack")} />
@@ -80,7 +91,7 @@ export default function DocumentsTab({
       <input type="file" id="file-payslip" accept="application/pdf, image/*" className="hidden" onChange={(e) => handleLocalUpload(e, "payslip")} />
       <input type="file" id="file-tax" accept="application/pdf" className="hidden" onChange={(e) => handleLocalUpload(e, "tax")} />
 
-      {/* Document Checklists */}
+      {/* Required Documents List */}
       <div className="auth-card p-5 space-y-5">
         <div className="border-b border-slate-100 pb-2.5">
           <h3 className="text-sm font-bold text-slate-900" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
@@ -115,14 +126,22 @@ export default function DocumentsTab({
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => document.getElementById("file-resume")?.click()}
-              className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                docResume ? "text-slate-500 hover:text-slate-800 bg-slate-100" : "text-white bg-red-600 hover:bg-red-700"
-              }`}
-            >
-              {docResume ? "Change" : "Upload PDF"}
-            </button>
+            {!readOnly ? (
+              <button
+                onClick={() => document.getElementById("file-resume")?.click()}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                  docResume ? "text-slate-500 hover:text-slate-800 bg-slate-100" : "text-white bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {docResume ? "Change" : "Upload PDF"}
+              </button>
+            ) : (
+              <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded border ${
+                docResume ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-slate-400 bg-slate-50 border-slate-200"
+              }`}>
+                {docResume ? "Uploaded" : "Not Uploaded"}
+              </span>
+            )}
           </div>
 
           {/* 2. Employee NID */}
@@ -152,24 +171,40 @@ export default function DocumentsTab({
                 <span className="text-[9px] text-slate-400 block truncate mb-1">
                   {docNidEmpFront ? docNidEmpFront : "Image required"}
                 </span>
-                <button
-                  onClick={() => document.getElementById("file-nid-emp-front")?.click()}
-                  className="text-[9px] font-bold px-2 py-0.5 rounded border border-slate-200 text-slate-650 hover:bg-slate-100 cursor-pointer"
-                >
-                  {docNidEmpFront ? "Replace" : "Upload"}
-                </button>
+                {!readOnly ? (
+                  <button
+                    onClick={() => document.getElementById("file-nid-emp-front")?.click()}
+                    className="text-[9px] font-bold px-2 py-0.5 rounded border border-slate-200 text-slate-650 hover:bg-slate-100 cursor-pointer"
+                  >
+                    {docNidEmpFront ? "Replace" : "Upload"}
+                  </button>
+                ) : (
+                  <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded border ${
+                    docNidEmpFront ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-slate-400 bg-slate-50 border-slate-200"
+                  }`}>
+                    {docNidEmpFront ? "Uploaded" : "Not Uploaded"}
+                  </span>
+                )}
               </div>
               <div className="bg-slate-50/50 p-2 rounded-lg border border-slate-100 text-center">
                 <span className="text-[10px] font-bold text-slate-600 block mb-1">Back Side</span>
                 <span className="text-[9px] text-slate-400 block truncate mb-1">
                   {docNidEmpBack ? docNidEmpBack : "Image required"}
                 </span>
-                <button
-                  onClick={() => document.getElementById("file-nid-emp-back")?.click()}
-                  className="text-[9px] font-bold px-2 py-0.5 rounded border border-slate-200 text-slate-650 hover:bg-slate-100 cursor-pointer"
-                >
-                  {docNidEmpBack ? "Replace" : "Upload"}
-                </button>
+                {!readOnly ? (
+                  <button
+                    onClick={() => document.getElementById("file-nid-emp-back")?.click()}
+                    className="text-[9px] font-bold px-2 py-0.5 rounded border border-slate-200 text-slate-650 hover:bg-slate-100 cursor-pointer"
+                  >
+                    {docNidEmpBack ? "Replace" : "Upload"}
+                  </button>
+                ) : (
+                  <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded border ${
+                    docNidEmpBack ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-slate-400 bg-slate-50 border-slate-200"
+                  }`}>
+                    {docNidEmpBack ? "Uploaded" : "Not Uploaded"}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -202,24 +237,40 @@ export default function DocumentsTab({
                 <span className="text-[9px] text-slate-400 block truncate mb-1">
                   {docNidNomFront ? docNidNomFront : "Image required"}
                 </span>
-                <button
-                  onClick={() => document.getElementById("file-nid-nom-front")?.click()}
-                  className="text-[9px] font-bold px-2 py-0.5 rounded border border-slate-200 text-slate-650 hover:bg-slate-100 cursor-pointer"
-                >
-                  {docNidNomFront ? "Replace" : "Upload"}
-                </button>
+                {!readOnly ? (
+                  <button
+                    onClick={() => document.getElementById("file-nid-nom-front")?.click()}
+                    className="text-[9px] font-bold px-2 py-0.5 rounded border border-slate-200 text-slate-650 hover:bg-slate-100 cursor-pointer"
+                  >
+                    {docNidNomFront ? "Replace" : "Upload"}
+                  </button>
+                ) : (
+                  <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded border ${
+                    docNidNomFront ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-slate-400 bg-slate-50 border-slate-200"
+                  }`}>
+                    {docNidNomFront ? "Uploaded" : "Not Uploaded"}
+                  </span>
+                )}
               </div>
               <div className="bg-slate-50/50 p-2 rounded-lg border border-slate-100 text-center">
                 <span className="text-[10px] font-bold text-slate-600 block mb-1">Back Side</span>
                 <span className="text-[9px] text-slate-400 block truncate mb-1">
                   {docNidNomBack ? docNidNomBack : "Image required"}
                 </span>
-                <button
-                  onClick={() => document.getElementById("file-nid-nom-back")?.click()}
-                  className="text-[9px] font-bold px-2 py-0.5 rounded border border-slate-200 text-slate-650 hover:bg-slate-100 cursor-pointer"
-                >
-                  {docNidNomBack ? "Replace" : "Upload"}
-                </button>
+                {!readOnly ? (
+                  <button
+                    onClick={() => document.getElementById("file-nid-nom-back")?.click()}
+                    className="text-[9px] font-bold px-2 py-0.5 rounded border border-slate-200 text-slate-650 hover:bg-slate-100 cursor-pointer"
+                  >
+                    {docNidNomBack ? "Replace" : "Upload"}
+                  </button>
+                ) : (
+                  <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded border ${
+                    docNidNomBack ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-slate-400 bg-slate-50 border-slate-200"
+                  }`}>
+                    {docNidNomBack ? "Uploaded" : "Not Uploaded"}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -248,14 +299,22 @@ export default function DocumentsTab({
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => document.getElementById("file-covid")?.click()}
-              className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                docCovid ? "text-slate-500 hover:text-slate-800 bg-slate-100" : "text-white bg-red-600 hover:bg-red-700"
-              }`}
-            >
-              {docCovid ? "Change" : "Upload File"}
-            </button>
+            {!readOnly ? (
+              <button
+                onClick={() => document.getElementById("file-covid")?.click()}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                  docCovid ? "text-slate-500 hover:text-slate-800 bg-slate-100" : "text-white bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {docCovid ? "Change" : "Upload File"}
+              </button>
+            ) : (
+              <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded border ${
+                docCovid ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-slate-400 bg-slate-50 border-slate-200"
+              }`}>
+                {docCovid ? "Uploaded" : "Not Uploaded"}
+              </span>
+            )}
           </div>
 
           {/* 5. Release Letter */}
@@ -282,14 +341,22 @@ export default function DocumentsTab({
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => document.getElementById("file-release")?.click()}
-              className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                docRelease ? "text-slate-500 hover:text-slate-800 bg-slate-100" : "text-white bg-red-600 hover:bg-red-700"
-              }`}
-            >
-              {docRelease ? "Change" : "Upload File"}
-            </button>
+            {!readOnly ? (
+              <button
+                onClick={() => document.getElementById("file-release")?.click()}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                  docRelease ? "text-slate-500 hover:text-slate-800 bg-slate-100" : "text-white bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {docRelease ? "Change" : "Upload File"}
+              </button>
+            ) : (
+              <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded border ${
+                docRelease ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-slate-400 bg-slate-50 border-slate-200"
+              }`}>
+                {docRelease ? "Uploaded" : "Not Uploaded"}
+              </span>
+            )}
           </div>
 
           {/* 6. Payslip / Salary Certificate */}
@@ -317,14 +384,22 @@ export default function DocumentsTab({
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => document.getElementById("file-payslip")?.click()}
-              className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                docPayslip ? "text-slate-500 hover:text-slate-800 bg-slate-100" : "text-white bg-red-600 hover:bg-red-700"
-              }`}
-            >
-              {docPayslip ? "Change" : "Upload File"}
-            </button>
+            {!readOnly ? (
+              <button
+                onClick={() => document.getElementById("file-payslip")?.click()}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                  docPayslip ? "text-slate-500 hover:text-slate-800 bg-slate-100" : "text-white bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {docPayslip ? "Change" : "Upload File"}
+              </button>
+            ) : (
+              <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded border ${
+                docPayslip ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-slate-400 bg-slate-50 border-slate-200"
+              }`}>
+                {docPayslip ? "Uploaded" : "Not Uploaded"}
+              </span>
+            )}
           </div>
 
           {/* 7. E-TIN & Tax Return */}
@@ -351,14 +426,22 @@ export default function DocumentsTab({
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => document.getElementById("file-tax")?.click()}
-              className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                docTax ? "text-slate-500 hover:text-slate-800 bg-slate-100" : "text-white bg-red-600 hover:bg-red-700"
-              }`}
-            >
-              {docTax ? "Change" : "Upload PDF"}
-            </button>
+            {!readOnly ? (
+              <button
+                onClick={() => document.getElementById("file-tax")?.click()}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                  docTax ? "text-slate-500 hover:text-slate-800 bg-slate-100" : "text-white bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {docTax ? "Change" : "Upload PDF"}
+              </button>
+            ) : (
+              <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded border ${
+                docTax ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-slate-400 bg-slate-50 border-slate-200"
+              }`}>
+                {docTax ? "Uploaded" : "Not Uploaded"}
+              </span>
+            )}
           </div>
 
         </div>

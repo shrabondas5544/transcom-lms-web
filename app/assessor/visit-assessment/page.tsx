@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MOCK_TARGET_EMPLOYEES } from "../../../lib/api";
 
 const CRITERIA = [
@@ -237,6 +238,7 @@ function ScoreRing({ score, size = 100 }: { score: number; size?: number }) {
 
 export default function VisitAssessmentPage() {
   // Navigation & workflow states
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<"portal" | "history" | "form" | "submitted">("portal");
   const [formReferrer, setFormReferrer] = useState<"portal" | "history">("portal");
   const [searchQuery, setSearchQuery] = useState("");
@@ -595,7 +597,8 @@ export default function VisitAssessmentPage() {
                 return (
                   <div 
                     key={a.id} 
-                    className="auth-card p-3 bg-white flex justify-between items-center gap-3 border border-slate-100"
+                    onClick={() => router.push(`/assessor/visit-assessment/${a.employeeId}`)}
+                    className="auth-card p-3 bg-white flex justify-between items-center gap-3 border border-slate-100 cursor-pointer hover:border-red-100 hover:shadow-sm transition-all"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Rank Indicator Badge */}

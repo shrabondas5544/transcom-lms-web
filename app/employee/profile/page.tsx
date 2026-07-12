@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useRef, useEffect, Suspense } from "react";
 import ProfileInfoTab from "../../../components/profile/ProfileInfoTab";
 import DocumentsTab from "../../../components/profile/DocumentsTab";
 import EducationTab from "../../../components/profile/EducationTab";
@@ -140,7 +140,18 @@ function getRatingConfig(score: number) {
 }
 
 export default function EmployeeProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center text-xs font-semibold text-slate-400">Loading profile content...</div>}>
+      <ProfileContent />
+    </Suspense>
+  );
+}
+
+function ProfileContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewId = searchParams.get("id");
+  const readOnly = Boolean(viewId);
   const [activeTab, setActiveTab] = useState<"profileInfo" | "documents" | "education" | "skill">("profileInfo");
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [attendanceFilter, setAttendanceFilter] = useState<"week" | "month" | "year">("month");
@@ -184,15 +195,16 @@ export default function EmployeeProfilePage() {
   }, [cameraActive, capturedImage]);
 
   useEffect(() => {
-    const profileId = sessionStorage.getItem("employeeProfileId");
-    if (!profileId) {
+    const sessionProfileId = sessionStorage.getItem("employeeProfileId");
+    const targetId = viewId || sessionProfileId;
+    if (!targetId) {
       router.push("/sign-in");
       return;
     }
 
     async function fetchProfile() {
       try {
-        const res = await fetch(`http://localhost:5276/api/EmployeeProfile/${profileId}`);
+        const res = await fetch(`http://localhost:5276/api/EmployeeProfile/${targetId}`);
         if (res.ok) {
           const data = await res.json();
           setPersonalInfo({
@@ -550,39 +562,45 @@ export default function EmployeeProfilePage() {
       {/* Top Header Bar */}
       <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3.5 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
-          <Link href="/sign-in" className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-600 transition-colors">
+          <Link href={readOnly ? "/assessor/dashboard" : "/sign-in"} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-600 transition-colors">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
           </Link>
-          <h1 className="text-lg font-bold text-slate-900" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>My Skill Profile</h1>
+          <h1 className="text-lg font-bold text-slate-900" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
+            {readOnly ? "Employee Profile" : "My Skill Profile"}
+          </h1>
         </div>
         <div className="flex items-center gap-2">
-          {/* QR Code Button */}
-          <button
-            onClick={() => setIsQrModalOpen(true)}
-            className="relative p-2 hover:bg-red-50 rounded-full text-slate-600 hover:text-red-600 transition-all"
-            title="Show My QR Code"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="3" height="3"/>
-              <rect x="19" y="14" width="2" height="2"/>
-              <rect x="14" y="19" width="2" height="2"/>
-              <rect x="18" y="18" width="3" height="3"/>
-            </svg>
-          </button>
-          {/* Notification Bell */}
-          <button className="relative p-2 hover:bg-slate-50 rounded-full text-slate-600 transition-all">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full"></span>
-          </button>
+          {!readOnly && (
+            <>
+              {/* QR Code Button */}
+              <button
+                onClick={() => setIsQrModalOpen(true)}
+                className="relative p-2 hover:bg-red-50 rounded-full text-slate-600 hover:text-red-600 transition-all"
+                title="Show My QR Code"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/>
+                  <rect x="14" y="14" width="3" height="3"/>
+                  <rect x="19" y="14" width="2" height="2"/>
+                  <rect x="14" y="19" width="2" height="2"/>
+                  <rect x="18" y="18" width="3" height="3"/>
+                </svg>
+              </button>
+              {/* Notification Bell */}
+              <button className="relative p-2 hover:bg-slate-50 rounded-full text-slate-600 transition-all">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full"></span>
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -613,22 +631,24 @@ export default function EmployeeProfilePage() {
                   )}
                 </div>
               </div>
-              <button
-                onClick={() => {
-                  setTempImage(avatarImage);
-                  setTempScale(imageScale);
-                  setTempX(imageX);
-                  setTempY(imageY);
-                  setIsEditModalOpen(true);
-                }}
-                className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 hover:bg-red-700 ring-2 ring-white text-white shadow-md transition-all cursor-pointer animate-pulse"
-                title="Edit profile picture"
-              >
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
-              </button>
+              {!readOnly && (
+                <button
+                  onClick={() => {
+                    setTempImage(avatarImage);
+                    setTempScale(imageScale);
+                    setTempX(imageX);
+                    setTempY(imageY);
+                    setIsEditModalOpen(true);
+                  }}
+                  className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 hover:bg-red-700 ring-2 ring-white text-white shadow-md transition-all cursor-pointer animate-pulse"
+                  title="Edit profile picture"
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                </button>
+              )}
             </div>
 
             {/* Info details */}
@@ -758,6 +778,7 @@ export default function EmployeeProfilePage() {
               setPersonalInfo={setPersonalInfo}
               mockEmployee={mockEmployee}
               onSave={handleSaveProfile}
+              readOnly={readOnly}
             />
           )}
 
@@ -782,6 +803,7 @@ export default function EmployeeProfilePage() {
               docTax={docTax}
               setDocTax={setDocTax}
               onSave={handleSaveProfile}
+              readOnly={readOnly}
             />
           )}
 
@@ -798,6 +820,7 @@ export default function EmployeeProfilePage() {
               educationPostGraduate={educationPostGraduate}
               setEducationPostGraduate={setEducationPostGraduate}
               onSave={handleSaveProfile}
+              readOnly={readOnly}
             />
           )}
 
