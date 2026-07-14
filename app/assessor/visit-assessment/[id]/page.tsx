@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
 const CRITERIA = [
   { key: "customerDealing", label: "Customer Dealing", short: "Cust. Dealing" },
   { key: "productKnowledge", label: "Product Knowledge", short: "Prod. Knowledge" },
@@ -12,54 +11,6 @@ const CRITERIA = [
   { key: "demonstrationSkill", label: "Demonstration Skill", short: "Demo Skill" },
   { key: "discipline", label: "Floor Discipline", short: "Discipline" },
 ];
-
-const ALL_AUDIT_HISTORY: Record<string, { date: string; score: number; scores: Record<string, number>; showroom: string }[]> = {
-  "EMP-5011": [ // Sujon Ali
-    { date: "Jan 2026", score: 6.2, scores: { customerDealing: 6, productKnowledge: 6, grooming: 7, demonstrationSkill: 6, discipline: 6 }, showroom: "Saheb Bazar Outlet" },
-    { date: "Feb 2026", score: 7.0, scores: { customerDealing: 7, productKnowledge: 7, grooming: 7, demonstrationSkill: 7, discipline: 7 }, showroom: "Saheb Bazar Outlet" },
-    { date: "Mar 2026", score: 7.4, scores: { customerDealing: 7, productKnowledge: 7, grooming: 8, demonstrationSkill: 8, discipline: 7 }, showroom: "Saheb Bazar Outlet" },
-    { date: "Apr 2026", score: 8.2, scores: { customerDealing: 8, productKnowledge: 8, grooming: 9, demonstrationSkill: 8, discipline: 8 }, showroom: "Saheb Bazar Outlet" },
-    { date: "May 2026", score: 8.8, scores: { customerDealing: 9, productKnowledge: 8, grooming: 9, demonstrationSkill: 9, discipline: 9 }, showroom: "Saheb Bazar Outlet" },
-    { date: "Jun 2026", score: 9.5, scores: { customerDealing: 10, productKnowledge: 9, grooming: 9, demonstrationSkill: 10, discipline: 9 }, showroom: "Saheb Bazar Outlet" },
-  ],
-  "EMP-2084": [ // Sayed Mahmud
-    { date: "Jan 2026", score: 7.5, scores: { customerDealing: 7, productKnowledge: 8, grooming: 7, demonstrationSkill: 8, discipline: 8 }, showroom: "Gulshan Outlet" },
-    { date: "Feb 2026", score: 7.8, scores: { customerDealing: 8, productKnowledge: 8, grooming: 8, demonstrationSkill: 7, discipline: 8 }, showroom: "Gulshan Outlet" },
-    { date: "Mar 2026", score: 8.2, scores: { customerDealing: 8, productKnowledge: 8, grooming: 9, demonstrationSkill: 8, discipline: 8 }, showroom: "Gulshan Outlet" },
-    { date: "Apr 2026", score: 8.6, scores: { customerDealing: 9, productKnowledge: 9, grooming: 8, demonstrationSkill: 9, discipline: 8 }, showroom: "Gulshan Outlet" },
-    { date: "May 2026", score: 9.0, scores: { customerDealing: 9, productKnowledge: 9, grooming: 9, demonstrationSkill: 9, discipline: 9 }, showroom: "Gulshan Outlet" },
-    { date: "Jun 2026", score: 9.2, scores: { customerDealing: 9, productKnowledge: 9, grooming: 10, demonstrationSkill: 9, discipline: 9 }, showroom: "Gulshan Outlet" },
-  ],
-  "EMP-2085": [ // Anisur Rahman
-    { date: "Feb 2026", score: 6.8, scores: { customerDealing: 7, productKnowledge: 6, grooming: 7, demonstrationSkill: 7, discipline: 7 }, showroom: "Gulshan Outlet" },
-    { date: "Apr 2026", score: 7.5, scores: { customerDealing: 8, productKnowledge: 7, grooming: 8, demonstrationSkill: 7, discipline: 7 }, showroom: "Gulshan Outlet" },
-    { date: "Jun 2026", score: 8.5, scores: { customerDealing: 9, productKnowledge: 8, grooming: 9, demonstrationSkill: 8, discipline: 9 }, showroom: "Gulshan Outlet" },
-  ],
-  "EMP-2088": [ // Mehrab Hossain
-    { date: "Jan 2026", score: 5.5, scores: { customerDealing: 6, productKnowledge: 5, grooming: 6, demonstrationSkill: 5, discipline: 5 }, showroom: "Dhanmondi Outlet" },
-    { date: "Mar 2026", score: 6.0, scores: { customerDealing: 6, productKnowledge: 6, grooming: 6, demonstrationSkill: 6, discipline: 6 }, showroom: "Dhanmondi Outlet" },
-    { date: "Jun 2026", score: 6.8, scores: { customerDealing: 7, productKnowledge: 6, grooming: 8, demonstrationSkill: 7, discipline: 6 }, showroom: "Dhanmondi Outlet" },
-  ],
-  "EMP-3011": [ // Imran Khan
-    { date: "Feb 2026", score: 7.2, scores: { customerDealing: 7, productKnowledge: 7, grooming: 8, demonstrationSkill: 7, discipline: 7 }, showroom: "Agrabad Outlet" },
-    { date: "Apr 2026", score: 7.8, scores: { customerDealing: 8, productKnowledge: 8, grooming: 8, demonstrationSkill: 8, discipline: 7 }, showroom: "Agrabad Outlet" },
-    { date: "Jun 2026", score: 8.1, scores: { customerDealing: 8, productKnowledge: 8, grooming: 9, demonstrationSkill: 8, discipline: 8 }, showroom: "Agrabad Outlet" },
-  ],
-  "EMP-3013": [ // Nayeem Uddin
-    { date: "Mar 2026", score: 6.0, scores: { customerDealing: 6, productKnowledge: 6, grooming: 7, demonstrationSkill: 6, discipline: 5 }, showroom: "GEC Circle Outlet" },
-    { date: "Jun 2026", score: 7.2, scores: { customerDealing: 7, productKnowledge: 7, grooming: 8, demonstrationSkill: 7, discipline: 7 }, showroom: "GEC Circle Outlet" },
-  ],
-};
-
-const EMPLOYEE_INFO: Record<string, { name: string; designation: string; showroom: string; division: string }> = {
-  "EMP-5011": { name: "Sujon Ali", designation: "Sales Executive", showroom: "Saheb Bazar Outlet", division: "Rajshahi Division" },
-  "EMP-2084": { name: "Sayed Mahmud", designation: "Senior Sales Executive", showroom: "Gulshan Outlet", division: "Dhaka Division" },
-  "EMP-2085": { name: "Anisur Rahman", designation: "Sales Executive", showroom: "Gulshan Outlet", division: "Dhaka Division" },
-  "EMP-2086": { name: "Taskeen Ahmed", designation: "Assistant Branch Manager", showroom: "Gulshan Outlet", division: "Dhaka Division" },
-  "EMP-2088": { name: "Mehrab Hossain", designation: "Senior Sales Executive", showroom: "Dhanmondi Outlet", division: "Dhaka Division" },
-  "EMP-3011": { name: "Imran Khan", designation: "Sales Executive", showroom: "Agrabad Outlet", division: "Chittagong Division" },
-  "EMP-3013": { name: "Nayeem Uddin", designation: "Sales Executive", showroom: "GEC Circle Outlet", division: "Chittagong Division" },
-};
 
 function getRatingConfig(score: number) {
   if (score >= 9.0) return { label: "Excellent", color: "#10b981", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" };
@@ -287,6 +238,21 @@ function RadarChart({ avgScores }: { avgScores: Record<string, number> }) {
   );
 }
 
+interface EmployeeInfo {
+  name: string;
+  designation: string;
+  showroom: string;
+  division: string;
+}
+
+interface EvaluationHistoryItem {
+  date: string;
+  score: number;
+  showroom: string;
+  scores: Record<string, number>;
+  remarks: Record<string, string>;
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function EmployeeAuditDetailPage() {
   const params = useParams();
@@ -294,11 +260,57 @@ export default function EmployeeAuditDetailPage() {
   const empId = params.id as string;
 
   const [activeChart, setActiveChart] = useState<"line" | "bar" | "radar">("line");
+  const [info, setInfo] = useState<EmployeeInfo | null>(null);
+  const [history, setHistory] = useState<EvaluationHistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedAuditIndex, setSelectedAuditIndex] = useState<number>(0);
 
-  const info = EMPLOYEE_INFO[empId];
-  const history = ALL_AUDIT_HISTORY[empId];
+  useEffect(() => {
+    async function fetchEmployeeHistory() {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`http://localhost:5276/api/ShowroomVisitEvaluation/employee/${empId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.info) {
+            setInfo(data.info);
+            setHistory(data.history || []);
+            if (data.history && data.history.length > 0) {
+              setSelectedAuditIndex(data.history.length - 1); // default to latest audit
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load employee audit history:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    if (empId) {
+      fetchEmployeeHistory();
+    }
+  }, [empId]);
 
-  if (!info || !history || history.length === 0) {
+  if (isLoading) {
+    return (
+      <div className="auth-bg min-h-screen flex flex-col pb-24">
+        <header className="sticky top-0 z-10 flex items-center gap-3 px-4 py-4 bg-white border-b border-slate-100 shadow-sm">
+          <button onClick={() => router.back()} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-600 transition-colors cursor-pointer">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <h1 className="text-sm font-extrabold text-slate-900">Audit Detail</h1>
+        </header>
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p className="text-xs text-slate-450 font-medium">Loading evaluation history...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!info) {
     return (
       <div className="auth-bg min-h-screen flex flex-col pb-24">
         <header className="sticky top-0 z-10 flex items-center gap-3 px-4 py-4 bg-white border-b border-slate-100 shadow-sm">
@@ -315,8 +327,8 @@ export default function EmployeeAuditDetailPage() {
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
-          <p className="text-sm font-bold text-slate-700">No audit records found</p>
-          <p className="text-xs text-slate-400 mt-1 leading-relaxed">This employee does not have any showroom visit assessment history yet.</p>
+          <p className="text-sm font-bold text-slate-700">No profile found</p>
+          <p className="text-xs text-slate-400 mt-1 leading-relaxed">This employee profile could not be found in the registry.</p>
           <button onClick={() => router.back()} className="mt-5 px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-xl cursor-pointer">
             Go Back
           </button>
@@ -325,19 +337,38 @@ export default function EmployeeAuditDetailPage() {
     );
   }
 
+  const hasHistory = history.length > 0;
+  
+  const displayHistory = hasHistory ? history : [
+    {
+      date: "No Audit",
+      score: 0.0,
+      showroom: info.showroom,
+      scores: { customerDealing: 0, productKnowledge: 0, grooming: 0, demonstrationSkill: 0, discipline: 0 },
+      remarks: { customerDealing: "", productKnowledge: "", grooming: "", demonstrationSkill: "", discipline: "" }
+    }
+  ];
+
   // Calculate averages per criterion
   const avgScores: Record<string, number> = {};
   CRITERIA.forEach(c => {
-    const vals = history.map(h => h.scores[c.key] ?? 0);
-    avgScores[c.key] = vals.reduce((s, v) => s + v, 0) / vals.length;
+    if (hasHistory) {
+      const vals = history.map(h => h.scores[c.key] ?? 0);
+      avgScores[c.key] = vals.reduce((s, v) => s + v, 0) / vals.length;
+    } else {
+      avgScores[c.key] = 0;
+    }
   });
 
-  const latestEntry = history[history.length - 1];
-  const firstEntry = history[0];
+  const latestEntry = displayHistory[displayHistory.length - 1];
+  const firstEntry = displayHistory[0];
   const latestCfg = getRatingConfig(latestEntry.score);
-  const trendDiff = (latestEntry.score - firstEntry.score).toFixed(1);
-  const trendUp = latestEntry.score >= firstEntry.score;
-  const overallAvg = history.reduce((s, h) => s + h.score, 0) / history.length;
+  const trendDiff = hasHistory ? (latestEntry.score - firstEntry.score).toFixed(1) : "0.0";
+  const trendUp = hasHistory ? latestEntry.score >= firstEntry.score : true;
+  const overallAvg = hasHistory ? history.reduce((s, h) => s + h.score, 0) / history.length : 0.0;
+
+  const selectedEntry = displayHistory[selectedAuditIndex] || latestEntry;
+  const selectedCfg = getRatingConfig(selectedEntry.score);
 
   return (
     <div className="auth-bg min-h-screen flex flex-col pb-24">
@@ -371,8 +402,7 @@ export default function EmployeeAuditDetailPage() {
         <div className="auth-card p-4">
           <div className="flex items-center gap-3.5">
             {/* Avatar initial */}
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold text-base flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold text-base flex-shrink-0 bg-gradient-to-r from-red-600 to-red-700">
               {info.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
@@ -412,16 +442,6 @@ export default function EmployeeAuditDetailPage() {
               </span>
               <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Trend</p>
             </div>
-          </div>
-
-          {/* Rating badge */}
-          <div className="mt-3 flex items-center gap-2">
-            <span className={`text-[9px] font-extrabold px-2.5 py-1 rounded-lg border ${latestCfg.bg}`}>
-              {latestCfg.label} Performance
-            </span>
-            <span className="text-[9px] text-slate-400 font-medium">
-              Based on {history.length} assessment{history.length > 1 ? "s" : ""}
-            </span>
           </div>
         </div>
 
@@ -468,27 +488,27 @@ export default function EmployeeAuditDetailPage() {
           </div>
         </div>
 
-        {/* Latest Assessment Breakdown */}
+        {/* Selected Assessment Breakdown */}
         <div className="auth-card p-4 space-y-3">
           <div>
-            <h3 className="text-xs font-extrabold text-slate-800" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
-              Latest Visit Breakdown
+            <h3 className="text-xs font-extrabold text-slate-800 text-left" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
+              {selectedAuditIndex === history.length - 1 ? "Latest Visit Breakdown" : "Visit Breakdown"}
             </h3>
-            <p className="text-[9px] text-slate-400 font-medium mt-0.5">{latestEntry.date} · {latestEntry.showroom}</p>
+            <p className="text-[9px] text-slate-400 font-medium mt-0.5 text-left">{selectedEntry.date} · {selectedEntry.showroom}</p>
           </div>
 
           <div className="space-y-2.5">
             {CRITERIA.map(c => {
-              const val = latestEntry.scores[c.key] ?? 0;
+              const val = selectedEntry.scores[c.key] ?? 0;
               const cfg = getRatingConfig(val);
               return (
                 <div key={c.key} className="flex items-center gap-3">
-                  <div className="w-20 flex-shrink-0">
-                    <span className="text-[9px] text-slate-600 font-semibold leading-tight block">{c.label}</span>
+                  <div className="w-20 flex-shrink-0 text-left">
+                    <span className="text-[9px] text-slate-650 font-bold leading-tight block">{c.label}</span>
                   </div>
                   <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full transition-all duration-500"
+                      className="h-full rounded-full transition-all duration-550"
                       style={{ width: `${(val / 10) * 100}%`, backgroundColor: cfg.color }}
                     />
                   </div>
@@ -501,34 +521,47 @@ export default function EmployeeAuditDetailPage() {
           </div>
 
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[10px] text-slate-500 font-semibold">Total Average</span>
+            <span className="text-[10px] text-slate-500 font-bold">Total Average</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-extrabold tabular-nums" style={{ color: latestCfg.color }}>
-                {latestEntry.score.toFixed(1)}/10
+              <span className="text-sm font-extrabold tabular-nums" style={{ color: selectedCfg.color }}>
+                {selectedEntry.score.toFixed(1)}/10
               </span>
-              <span className={`text-[8px] font-bold px-2 py-0.5 rounded-lg border ${latestCfg.bg}`}>
-                {latestCfg.label}
+              <span className={`text-[8px] font-bold px-2 py-0.5 rounded-lg border ${selectedCfg.bg}`}>
+                {selectedCfg.label}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Visit History Timeline */}
+        {/* Visit History Timeline (Shows at most 5 items) */}
         <div className="auth-card p-4 space-y-3">
-          <h3 className="text-xs font-extrabold text-slate-800" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
+          <h3 className="text-xs font-extrabold text-slate-800 text-left" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
             Visit History
           </h3>
 
           <div className="space-y-2">
-            {[...history].reverse().map((h, idx) => {
+            {[...history].reverse().slice(0, 5).map((h, idx) => {
               const cfg = getRatingConfig(h.score);
+              const originalIndex = history.indexOf(h);
+              const isSelected = selectedAuditIndex === originalIndex;
+
               return (
-                <div key={idx} className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 bg-slate-50/40">
-                  {/* Timeline dot */}
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cfg.color }} />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] font-bold text-slate-700">{h.date}</span>
-                    <span className="text-[9px] text-slate-400 font-medium block">{h.showroom}</span>
+                <div
+                  key={idx}
+                  onClick={() => setSelectedAuditIndex(originalIndex)}
+                  className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
+                    isSelected 
+                      ? "border-red-500 bg-red-50/15 ring-2 ring-red-100 shadow-sm"
+                      : "border-slate-100 bg-slate-50/40 hover:bg-slate-50 hover:border-slate-200"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* Timeline dot */}
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cfg.color }} />
+                    <div className="flex-1 min-w-0 text-left">
+                      <span className="text-[10px] font-extrabold text-slate-700">{h.date}</span>
+                      <span className="text-[9px] text-slate-400 font-semibold block mt-0.5">{h.showroom}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <span className="text-xs font-extrabold tabular-nums" style={{ color: cfg.color }}>{h.score.toFixed(1)}</span>

@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MOCK_TARGET_EMPLOYEES } from "../../../lib/api";
 
 const CRITERIA = [
   {
@@ -52,7 +51,7 @@ const CRITERIA = [
     description: "Adherence to duty roster shifts, floor hygiene, tag updating, and active cooperation with showroom leadership.",
     svg: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 022-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
       </svg>
     )
   },
@@ -63,6 +62,7 @@ type RemarkMap = Record<string, string>;
 
 interface IPastAssessment {
   id: string;
+  employeeProfileId: number;
   employeeId: string;
   employeeName: string;
   designation: string;
@@ -73,129 +73,6 @@ interface IPastAssessment {
   scores: ScoreMap;
   remarks: RemarkMap;
 }
-
-const OTHER_ASSESSMENTS: IPastAssessment[] = [
-  {
-    id: "REP-9001",
-    employeeId: "EMP-2084",
-    employeeName: "Sayed Mahmud",
-    designation: "Senior Sales Executive",
-    showroom: "Gulshan Outlet",
-    division: "Dhaka Division",
-    date: "01 July 2026",
-    score: 9.2,
-    scores: { customerDealing: 9, productKnowledge: 9, grooming: 10, demonstrationSkill: 9, discipline: 9 },
-    remarks: {}
-  },
-  {
-    id: "REP-9002",
-    employeeId: "EMP-2086",
-    employeeName: "Taskeen Ahmed",
-    designation: "Assistant Branch Manager",
-    showroom: "Gulshan Outlet",
-    division: "Dhaka Division",
-    date: "30 June 2026",
-    score: 7.8,
-    scores: { customerDealing: 8, productKnowledge: 7, grooming: 8, demonstrationSkill: 8, discipline: 8 },
-    remarks: {}
-  },
-  {
-    id: "REP-9003",
-    employeeId: "EMP-2087",
-    employeeName: "Fahim Shahriar",
-    designation: "Sales Executive",
-    showroom: "Dhanmondi Outlet",
-    division: "Dhaka Division",
-    date: "29 June 2026",
-    score: 5.4,
-    scores: { customerDealing: 5, productKnowledge: 5, grooming: 6, demonstrationSkill: 5, discipline: 6 },
-    remarks: {}
-  },
-  {
-    id: "REP-9004",
-    employeeId: "EMP-2089",
-    employeeName: "Sadia Afrin",
-    designation: "Sales Executive",
-    showroom: "Uttara Outlet",
-    division: "Dhaka Division",
-    date: "28 June 2026",
-    score: 8.8,
-    scores: { customerDealing: 9, productKnowledge: 8, grooming: 9, demonstrationSkill: 9, discipline: 9 },
-    remarks: {}
-  },
-  {
-    id: "REP-9005",
-    employeeId: "EMP-2090",
-    employeeName: "Kamrul Hasan",
-    designation: "Assistant Branch Manager",
-    showroom: "Uttara Outlet",
-    division: "Dhaka Division",
-    date: "27 June 2026",
-    score: 4.2,
-    scores: { customerDealing: 4, productKnowledge: 4, grooming: 5, demonstrationSkill: 4, discipline: 4 },
-    remarks: {}
-  },
-  {
-    id: "REP-9006",
-    employeeId: "EMP-3012",
-    employeeName: "Arifur Rahman",
-    designation: "Senior Sales Executive",
-    showroom: "Agrabad Outlet",
-    division: "Chittagong Division",
-    date: "26 June 2026",
-    score: 6.5,
-    scores: { customerDealing: 6, productKnowledge: 7, grooming: 6, demonstrationSkill: 7, discipline: 6 },
-    remarks: {}
-  },
-  {
-    id: "REP-9007",
-    employeeId: "EMP-3013",
-    employeeName: "Nayeem Uddin",
-    designation: "Sales Executive",
-    showroom: "GEC Circle Outlet",
-    division: "Chittagong Division",
-    date: "25 June 2026",
-    score: 7.2,
-    scores: { customerDealing: 7, productKnowledge: 7, grooming: 8, demonstrationSkill: 7, discipline: 7 },
-    remarks: {}
-  },
-  {
-    id: "REP-9008",
-    employeeId: "EMP-4011",
-    employeeName: "Hafizur Rahman",
-    designation: "Senior Sales Executive",
-    showroom: "Zindabazar Outlet",
-    division: "Sylhet Division",
-    date: "24 June 2026",
-    score: 8.0,
-    scores: { customerDealing: 8, productKnowledge: 8, grooming: 8, demonstrationSkill: 8, discipline: 8 },
-    remarks: {}
-  },
-  {
-    id: "REP-9009",
-    employeeId: "EMP-4012",
-    employeeName: "Zamil Ahmed",
-    designation: "Assistant Branch Manager",
-    showroom: "Uposhahar Outlet",
-    division: "Sylhet Division",
-    date: "23 June 2026",
-    score: 5.9,
-    scores: { customerDealing: 6, productKnowledge: 5, grooming: 6, demonstrationSkill: 6, discipline: 6 },
-    remarks: {}
-  },
-  {
-    id: "REP-9010",
-    employeeId: "EMP-5011",
-    employeeName: "Sujon Ali",
-    designation: "Sales Executive",
-    showroom: "Saheb Bazar Outlet",
-    division: "Rajshahi Division",
-    date: "22 June 2026",
-    score: 9.5,
-    scores: { customerDealing: 10, productKnowledge: 9, grooming: 9, demonstrationSkill: 10, discipline: 9 },
-    remarks: {}
-  }
-];
 
 function getRatingConfig(score: number) {
   if (score >= 9.0) return { label: "Excellent Performance", color: "text-emerald-600", bar: "#10b981", bg: "bg-emerald-50 text-emerald-800 border-emerald-200" };
@@ -237,7 +114,6 @@ function ScoreRing({ score, size = 100 }: { score: number; size?: number }) {
 }
 
 export default function VisitAssessmentPage() {
-  // Navigation & workflow states
   const router = useRouter();
   const [viewMode, setViewMode] = useState<"portal" | "history" | "form" | "submitted">("portal");
   const [formReferrer, setFormReferrer] = useState<"portal" | "history">("portal");
@@ -263,99 +139,70 @@ export default function VisitAssessmentPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Mock past assessments database (logged by current assessor)
-  const [pastAssessments, setPastAssessments] = useState<IPastAssessment[]>([
-    {
-      id: "REP-1021",
-      employeeId: "EMP-2085",
-      employeeName: "Anisur Rahman",
-      designation: "Sales Executive",
-      showroom: "Gulshan Outlet",
-      division: "Dhaka Division",
-      date: "04 July 2026",
-      score: 8.5,
-      scores: { customerDealing: 9, productKnowledge: 8, grooming: 9, demonstrationSkill: 8, discipline: 9 },
-      remarks: {
-        customerDealing: "Excellent interaction.",
-        productKnowledge: "Very good spec knowledge.",
-        grooming: "Compliant.",
-        demonstrationSkill: "Clear demonstration.",
-        discipline: "Cooperative.",
-      }
-    },
-    {
-      id: "REP-1022",
-      employeeId: "EMP-2088",
-      employeeName: "Mehrab Hossain",
-      designation: "Senior Sales Executive",
-      showroom: "Dhanmondi Outlet",
-      division: "Dhaka Division",
-      date: "03 July 2026",
-      score: 6.8,
-      scores: { customerDealing: 7, productKnowledge: 6, grooming: 8, demonstrationSkill: 7, discipline: 6 },
-      remarks: {
-        customerDealing: "Good communication.",
-        productKnowledge: "Needs improvement on premium lines.",
-        grooming: "Compliant.",
-        demonstrationSkill: "Satisfactory.",
-        discipline: "Satisfactory.",
-      }
-    },
-    {
-      id: "REP-1023",
-      employeeId: "EMP-3011",
-      employeeName: "Imran Khan",
-      designation: "Sales Executive",
-      showroom: "Agrabad Outlet",
-      division: "Chittagong Division",
-      date: "02 July 2026",
-      score: 8.1,
-      scores: { customerDealing: 8, productKnowledge: 8, grooming: 9, demonstrationSkill: 8, discipline: 8 },
-      remarks: {
-        customerDealing: "Good active listener.",
-        productKnowledge: "Familiar with promotions.",
-        grooming: "Clean uniform.",
-        demonstrationSkill: "Friendly demo style.",
-        discipline: "Team player.",
-      }
-    },
-  ]);
+  // Real DB state
+  const [globalLeaderboard, setGlobalLeaderboard] = useState<IPastAssessment[]>([]);
+  const [dbEmployees, setDbEmployees] = useState<any[]>([]);
+  const [myAuditIds, setMyAuditIds] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Average score calculator
+  // Load my logged audit IDs from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem("transcom_my_audit_ids");
+    if (stored) {
+      try {
+        setMyAuditIds(JSON.parse(stored));
+      } catch (e) {}
+    }
+  }, []);
+
+  // Load employee profiles from DB
+  useEffect(() => {
+    async function fetchDbEmployees() {
+      try {
+        const res = await fetch("http://localhost:5276/api/EmployeeProfile?page=1&pageSize=1000");
+        if (res.ok) {
+          const data = await res.json();
+          setDbEmployees(data.items || []);
+        }
+      } catch (err) {
+        console.error("Failed to load employee profiles:", err);
+      }
+    }
+    fetchDbEmployees();
+  }, []);
+
+  // Load evaluations leaderboard from DB
+  const loadEvaluations = async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append("search", searchQuery);
+      params.append("sortDirection", sortDirection);
+      
+      const res = await fetch(`http://localhost:5276/api/ShowroomVisitEvaluation?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setGlobalLeaderboard(data);
+      }
+    } catch (err) {
+      console.error("Failed to load global evaluations:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadEvaluations();
+  }, [searchQuery, sortDirection]);
+
+  // Derived: assessor audits completed by this session
+  const pastAssessments = useMemo(() => {
+    return globalLeaderboard.filter(a => myAuditIds.includes(a.id));
+  }, [globalLeaderboard, myAuditIds]);
+
   const formAvg = useMemo(() => {
     return CRITERIA.reduce((s, c) => s + scores[c.key], 0) / CRITERIA.length;
   }, [scores]);
-
-  // Combine assessor's audits with other audits for the unified global leaderboard
-  const globalLeaderboard = useMemo(() => {
-    const merged = [...pastAssessments];
-    OTHER_ASSESSMENTS.forEach(other => {
-      if (!merged.some(item => item.id === other.id)) {
-        merged.push(other);
-      }
-    });
-
-    let result = merged;
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        item =>
-          item.employeeName.toLowerCase().includes(q) ||
-          item.showroom.toLowerCase().includes(q) ||
-          item.division.toLowerCase().includes(q) ||
-          item.designation.toLowerCase().includes(q)
-      );
-    }
-
-    if (sortDirection === "desc") {
-      result.sort((a, b) => b.score - a.score);
-    } else {
-      result.sort((a, b) => a.score - b.score);
-    }
-
-    return result;
-  }, [pastAssessments, searchQuery, sortDirection]);
 
   // Paginated Leaderboard (10 items per page)
   const totalPages = Math.ceil(globalLeaderboard.length / PAGE_SIZE) || 1;
@@ -364,7 +211,6 @@ export default function VisitAssessmentPage() {
     return globalLeaderboard.slice(startIndex, startIndex + PAGE_SIZE);
   }, [globalLeaderboard, currentPage]);
 
-  // Reset page number on search or sort change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, sortDirection]);
@@ -392,10 +238,21 @@ export default function VisitAssessmentPage() {
         }
       })();
 
-      // Automatically mock "decoding" after 2.5 seconds
       const timer = setTimeout(() => {
-        const targetEmp = MOCK_TARGET_EMPLOYEES.find((emp) => emp.id === "EMP-2084") || MOCK_TARGET_EMPLOYEES[0];
-        handleScanSuccess(targetEmp);
+        if (dbEmployees.length > 0) {
+          const targetEmp = dbEmployees.find(emp => emp.code === "5011" || emp.code === "0632") || dbEmployees[0];
+          handleScanSuccess({
+            id: targetEmp.id,
+            code: targetEmp.code,
+            name: targetEmp.name,
+            designation: targetEmp.designation,
+            showroom: targetEmp.locationOutlet,
+            division: targetEmp.division || "Dhaka Division"
+          });
+        } else {
+          alert("No employee profiles found in the database. Please import employee records via the Admin panel first.");
+          setIsScannerOpen(false);
+        }
       }, 2500);
 
       return () => {
@@ -404,7 +261,7 @@ export default function VisitAssessmentPage() {
         cleanupCamera();
       };
     }
-  }, [isScannerOpen]);
+  }, [isScannerOpen, dbEmployees]);
 
   const cleanupCamera = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -416,12 +273,12 @@ export default function VisitAssessmentPage() {
     setIsScannerOpen(false);
     
     // Check if employee already has an assessment record in list
-    const existing = pastAssessments.find((a) => a.employeeId === employee.id);
+    const existing = pastAssessments.find((a) => a.employeeProfileId === employee.id);
     if (existing) {
       setScannedEmployee(employee);
       setScores(existing.scores);
       setRemarks(existing.remarks);
-      setEditingId(existing.id);
+      setEditingId(existing.id.replace("REP-", ""));
     } else {
       setScannedEmployee(employee);
       setScores(Object.fromEntries(CRITERIA.map((c) => [c.key, 5])));
@@ -434,7 +291,8 @@ export default function VisitAssessmentPage() {
 
   const handleEditCard = (a: any) => {
     setScannedEmployee({
-      id: a.employeeId,
+      id: a.employeeProfileId,
+      code: a.employeeId,
       name: a.employeeName,
       designation: a.designation,
       showroom: a.showroom,
@@ -442,44 +300,64 @@ export default function VisitAssessmentPage() {
     });
     setScores(a.scores);
     setRemarks(a.remarks);
-    setEditingId(a.id);
+    setEditingId(a.id.replace("REP-", ""));
     setFormReferrer("history");
     setViewMode("form");
   };
 
-  const handleFormSubmit = () => {
-    if (editingId) {
-      // Edit existing review
-      setPastAssessments((prev) =>
-        prev.map((a) =>
-          a.id === editingId
-            ? {
-                ...a,
-                score: formAvg,
-                scores: { ...scores },
-                remarks: { ...remarks },
-              }
-            : a
-        )
-      );
-    } else {
-      // Log new assessment
-      const newReport: IPastAssessment = {
-        id: "REP-" + Math.floor(1000 + Math.random() * 9000),
-        employeeId: scannedEmployee.id,
-        employeeName: scannedEmployee.name,
-        designation: scannedEmployee.designation,
-        showroom: scannedEmployee.showroom,
-        division: scannedEmployee.division,
-        date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }),
-        score: formAvg,
-        scores: { ...scores },
-        remarks: { ...remarks },
-      };
-      setPastAssessments((prev) => [newReport, ...prev]);
+  const handleFormSubmit = async () => {
+    const payload = {
+      employeeProfileId: scannedEmployee.id,
+      visitDate: new Date().toISOString(),
+      customerDealingScore: scores.customerDealing,
+      customerDealingRemarks: remarks.customerDealing || "",
+      productKnowledgeScore: scores.productKnowledge,
+      productKnowledgeRemarks: remarks.productKnowledge || "",
+      groomingScore: scores.grooming,
+      groomingRemarks: remarks.grooming || "",
+      demonstrationSkillScore: scores.demonstrationSkill,
+      demonstrationSkillRemarks: remarks.demonstrationSkill || "",
+      disciplineScore: scores.discipline,
+      disciplineRemarks: remarks.discipline || ""
+    };
+
+    try {
+      let res;
+      if (editingId) {
+        // PUT update
+        res = await fetch(`http://localhost:5276/api/ShowroomVisitEvaluation/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        // POST create
+        res = await fetch("http://localhost:5276/api/ShowroomVisitEvaluation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (res.ok) {
+        if (!editingId) {
+          const saved = await res.json();
+          const createdId = "REP-" + saved.id;
+          const currentMyAudits = [...myAuditIds, createdId];
+          setMyAuditIds(currentMyAudits);
+          localStorage.setItem("transcom_my_audit_ids", JSON.stringify(currentMyAudits));
+        }
+        await loadEvaluations();
+        setViewMode("submitted");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        const errMsg = await res.text();
+        alert("Failed to submit audit: " + errMsg);
+      }
+    } catch (err) {
+      console.error("Failed to save evaluation:", err);
+      alert("A network error occurred while saving evaluation.");
     }
-    setViewMode("submitted");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // ── 1. PORTAL VIEW (LEADERBOARD HUB) ──────────────────────────────────
@@ -583,64 +461,72 @@ export default function VisitAssessmentPage() {
             
             {/* Leaderboard Cards */}
             <div className="space-y-2.5">
-              {paginatedLeaderboard.map((a, index) => {
-                const rank = (currentPage - 1) * PAGE_SIZE + index + 1;
-                const config = getRatingConfig(a.score);
-                const isOwnAudit = pastAssessments.some(pa => pa.id === a.id);
-
-                // Ranking colors
-                let rankStyle = "bg-slate-100 text-slate-600 border-slate-200";
-                if (rank === 1) rankStyle = "bg-amber-500/10 text-amber-650 border-amber-500/20";
-                else if (rank === 2) rankStyle = "bg-slate-400/10 text-slate-650 border-slate-400/20";
-                else if (rank === 3) rankStyle = "bg-orange-500/10 text-orange-650 border-orange-500/20";
-
-                return (
-                  <div 
-                    key={a.id} 
-                    onClick={() => router.push(`/assessor/visit-assessment/${a.employeeId}`)}
-                    className="auth-card p-3 bg-white flex justify-between items-center gap-3 border border-slate-100 cursor-pointer hover:border-red-100 hover:shadow-sm transition-all"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {/* Rank Indicator Badge */}
-                      <div className={`w-7 h-7 rounded-lg border flex items-center justify-center text-[10px] font-extrabold flex-shrink-0 ${rankStyle}`}>
-                        {rank}
-                      </div>
-
-                      <div className="min-w-0 text-left">
-                        <div className="flex items-center gap-1.5">
-                          <h5 className="text-xs font-bold text-slate-900 truncate leading-tight">{a.employeeName}</h5>
-                          {isOwnAudit && (
-                            <span className="px-1.5 py-0.2 bg-red-50 text-red-655 border border-red-100 text-[7px] font-extrabold rounded-md uppercase">
-                              My Audit
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[9px] text-slate-450 font-semibold block truncate mt-0.5">
-                          {a.designation}
-                        </span>
-                        <p className="text-[9px] text-slate-500 font-medium block truncate mt-0.5">
-                          {a.showroom} • <span className="text-slate-400 font-semibold">{a.division.replace(" Division", "")}</span>
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <div className="flex items-baseline leading-none">
-                        <span className={`text-sm font-mono font-extrabold ${config.color}`}>{a.score.toFixed(1)}</span>
-                        <span className="text-[8px] text-slate-400 font-bold">/10</span>
-                      </div>
-                      <span className={`px-2 py-0.5 rounded text-[8px] font-bold border ${config.bg}`}>
-                        {config.label.split(" ")[0]}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {paginatedLeaderboard.length === 0 && (
-                <div className="py-10 text-center text-xs text-slate-400 italic bg-white/40 rounded-2xl border border-dashed border-slate-200">
-                  No matching rankings found.
+              {isLoading ? (
+                <div className="py-12 text-center">
+                  <div className="w-6 h-6 border-2 border-red-650 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-xs text-slate-400 font-medium">Loading rankings...</p>
                 </div>
+              ) : (
+                <>
+                  {paginatedLeaderboard.map((a, index) => {
+                    const rank = (currentPage - 1) * PAGE_SIZE + index + 1;
+                    const config = getRatingConfig(a.score);
+                    const isOwnAudit = myAuditIds.includes(a.id);
+
+                    // Ranking colors
+                    let rankStyle = "bg-slate-100 text-slate-600 border-slate-200";
+                    if (rank === 1) rankStyle = "bg-amber-500/10 text-amber-650 border-amber-500/20";
+                    else if (rank === 2) rankStyle = "bg-slate-400/10 text-slate-650 border-slate-400/20";
+                    else if (rank === 3) rankStyle = "bg-orange-500/10 text-orange-650 border-orange-500/20";
+
+                    return (
+                      <div 
+                        key={a.id} 
+                        onClick={() => router.push(`/assessor/visit-assessment/${a.employeeProfileId}`)}
+                        className="auth-card p-3 bg-white flex justify-between items-center gap-3 border border-slate-100 cursor-pointer hover:border-red-100 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 text-left">
+                          <div className={`w-7 h-7 rounded-lg border flex items-center justify-center text-[10px] font-extrabold flex-shrink-0 ${rankStyle}`}>
+                            {rank}
+                          </div>
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h5 className="text-xs font-bold text-slate-900 truncate leading-tight">{a.employeeName}</h5>
+                              {isOwnAudit && (
+                                <span className="px-1.5 py-0.2 bg-red-50 text-red-655 border border-red-100 text-[7px] font-extrabold rounded-md uppercase">
+                                  My Audit
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[9px] text-slate-450 font-semibold block truncate mt-0.5">
+                              {a.designation}
+                            </span>
+                            <p className="text-[9px] text-slate-500 font-medium block truncate mt-0.5">
+                              {a.showroom} • <span className="text-slate-400 font-semibold">{a.division.replace(" Division", "")}</span>
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <div className="flex items-baseline leading-none">
+                            <span className={`text-sm font-mono font-extrabold ${config.color}`}>{a.score.toFixed(1)}</span>
+                            <span className="text-[8px] text-slate-400 font-bold">/10</span>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-[8px] font-bold border ${config.bg}`}>
+                            {config.label.split(" ")[0]}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {paginatedLeaderboard.length === 0 && (
+                    <div className="py-10 text-center text-xs text-slate-400 italic bg-white/40 rounded-2xl border border-dashed border-slate-200">
+                      No matching rankings found.
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -689,13 +575,10 @@ export default function VisitAssessmentPage() {
 
               {/* Scanner Grid Overlay */}
               <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
-                {/* 4 target corners */}
                 <div className="absolute top-6 left-6 w-8 h-8 border-t-4 border-l-4 border-red-650 rounded-tl-lg"></div>
                 <div className="absolute top-6 right-6 w-8 h-8 border-t-4 border-r-4 border-red-650 rounded-tr-lg"></div>
                 <div className="absolute bottom-6 left-6 w-8 h-8 border-b-4 border-l-4 border-red-650 rounded-bl-lg"></div>
                 <div className="absolute bottom-6 right-6 w-8 h-8 border-b-4 border-r-4 border-red-650 rounded-br-lg"></div>
-
-                {/* Laser animation */}
                 <div className="w-full h-0.5 bg-red-600/80 shadow-[0_0_8px_2px_rgba(239,68,68,0.7)] animate-bounce"></div>
               </div>
             </div>
@@ -756,16 +639,15 @@ export default function VisitAssessmentPage() {
                   onClick={() => handleEditCard(a)}
                   className="auth-card p-3 bg-white flex justify-between items-center gap-3 hover:bg-red-50/10 hover:border-red-200 transition-all cursor-pointer active:scale-[0.99] border border-slate-100 group"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 text-left">
                     <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-100 flex items-center justify-center text-[10px] font-extrabold flex-shrink-0 group-hover:bg-red-600 group-hover:text-white transition-colors">
-                      {/* Edit Pen Icon */}
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                         <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                       </svg>
                     </div>
 
-                    <div className="min-w-0 text-left">
+                    <div className="min-w-0">
                       <h5 className="text-xs font-bold text-slate-900 truncate leading-tight group-hover:text-red-655 transition-colors">
                         {a.employeeName}
                       </h5>
@@ -895,7 +777,7 @@ export default function VisitAssessmentPage() {
                 </div>
               </div>
               
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 text-left">
                 <div className="flex items-center gap-2">
                   <span className="text-[8px] font-extrabold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded uppercase tracking-wider">Showroom Agent</span>
                 </div>
@@ -921,7 +803,7 @@ export default function VisitAssessmentPage() {
               </div>
               <div>
                 <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Employee ID</span>
-                <span className="text-slate-800 font-bold mt-0.5 block tracking-widest font-mono">{scannedEmployee.id}</span>
+                <span className="text-slate-800 font-bold mt-0.5 block tracking-widest font-mono">{scannedEmployee.code}</span>
               </div>
             </div>
           </section>
@@ -981,7 +863,7 @@ export default function VisitAssessmentPage() {
                       }}
                     />
                   </div>
-
+                  
                   <div className="flex justify-between px-0.5 pt-1">
                     {Array.from({ length: 10 }).map((_, i) => (
                       <button
