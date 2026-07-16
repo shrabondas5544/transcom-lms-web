@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -243,6 +243,11 @@ interface EmployeeInfo {
   designation: string;
   showroom: string;
   division: string;
+  employeeCode: string;
+  avatarImage?: string;
+  avatarScale?: number;
+  avatarX?: number;
+  avatarY?: number;
 }
 
 interface EvaluationHistoryItem {
@@ -264,6 +269,25 @@ export default function EmployeeAuditDetailPage() {
   const [history, setHistory] = useState<EvaluationHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAuditIndex, setSelectedAuditIndex] = useState<number>(0);
+
+  const avatarData = useMemo(() => {
+    if (!info?.employeeCode) return null;
+    if (info.avatarImage) {
+      return {
+        img: info.avatarImage,
+        scale: info.avatarScale || 1,
+        x: info.avatarX || 0,
+        y: info.avatarY || 0
+      };
+    }
+    if (typeof window === "undefined") return null;
+    const img = localStorage.getItem(`transcom_avatar_${info.employeeCode}`);
+    if (!img) return null;
+    const scale = parseFloat(localStorage.getItem(`transcom_avatar_scale_${info.employeeCode}`) || "1");
+    const x = parseFloat(localStorage.getItem(`transcom_avatar_x_${info.employeeCode}`) || "0");
+    const y = parseFloat(localStorage.getItem(`transcom_avatar_y_${info.employeeCode}`) || "0");
+    return { img, scale, x, y };
+  }, [info]);
 
   useEffect(() => {
     async function fetchEmployeeHistory() {
@@ -401,9 +425,22 @@ export default function EmployeeAuditDetailPage() {
         {/* Employee Info Card */}
         <div className="auth-card p-4">
           <div className="flex items-center gap-3.5">
-            {/* Avatar initial */}
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold text-base flex-shrink-0 bg-gradient-to-r from-red-600 to-red-700">
-              {info.name.charAt(0)}
+            {/* Avatar initial or image */}
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 bg-slate-50 border border-slate-100 overflow-hidden relative">
+              {avatarData ? (
+                <img
+                  src={avatarData.img}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                  style={{
+                    transform: `scale(${avatarData.scale}) translate(${avatarData.x}px, ${avatarData.y}px)`
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white font-extrabold text-base bg-gradient-to-r from-red-600 to-red-700">
+                  {info.name.charAt(0)}
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-sm font-extrabold text-slate-900 leading-tight" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>

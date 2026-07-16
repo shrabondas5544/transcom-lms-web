@@ -290,6 +290,12 @@ function ProfileContent() {
             employeeCode: data.employeeCode || "",
             department: data.department || ""
           });
+          if (data.avatarImage) {
+            setAvatarImage(data.avatarImage);
+            setImageScale(data.avatarScale || 1);
+            setImageX(data.avatarX || 0);
+            setImageY(data.avatarY || 0);
+          }
           if (data.educationSSC) setEducationSSC(data.educationSSC);
           if (data.educationHSC) setEducationHSC(data.educationHSC);
           if (data.educationDiploma) setEducationDiploma(data.educationDiploma);
@@ -388,6 +394,21 @@ function ProfileContent() {
     employeeCode: "",
     department: ""
   });
+
+  useEffect(() => {
+    if (personalInfo.employeeCode) {
+      const saved = localStorage.getItem(`transcom_avatar_${personalInfo.employeeCode}`);
+      if (saved) {
+        setAvatarImage(saved);
+        const scale = localStorage.getItem(`transcom_avatar_scale_${personalInfo.employeeCode}`);
+        const x = localStorage.getItem(`transcom_avatar_x_${personalInfo.employeeCode}`);
+        const y = localStorage.getItem(`transcom_avatar_y_${personalInfo.employeeCode}`);
+        if (scale) setImageScale(parseFloat(scale));
+        if (x) setImageX(parseFloat(x));
+        if (y) setImageY(parseFloat(y));
+      }
+    }
+  }, [personalInfo.employeeCode]);
 
   const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false);
   const [tempInfo, setTempInfo] = useState({ ...personalInfo });
@@ -532,6 +553,10 @@ function ProfileContent() {
       instagram: updatedData.personalInfo?.instagram ?? personalInfo.instagram,
       xLink: updatedData.personalInfo?.xLink ?? personalInfo.xLink,
       linkedin: updatedData.personalInfo?.linkedin ?? personalInfo.linkedin,
+      avatarImage: updatedData.avatarImage !== undefined ? updatedData.avatarImage : avatarImage,
+      avatarScale: updatedData.avatarScale !== undefined ? updatedData.avatarScale : imageScale,
+      avatarX: updatedData.avatarX !== undefined ? updatedData.avatarX : imageX,
+      avatarY: updatedData.avatarY !== undefined ? updatedData.avatarY : imageY,
 
       educationSSC: updatedData.educationSSC ?? educationSSC,
       educationHSC: updatedData.educationHSC ?? educationHSC,
@@ -1804,6 +1829,18 @@ function ProfileContent() {
                     setImageScale(tempScale);
                     setImageX(tempX);
                     setImageY(tempY);
+                    if (personalInfo.employeeCode) {
+                      localStorage.setItem(`transcom_avatar_${personalInfo.employeeCode}`, tempImage || "");
+                      localStorage.setItem(`transcom_avatar_scale_${personalInfo.employeeCode}`, tempScale.toString());
+                      localStorage.setItem(`transcom_avatar_x_${personalInfo.employeeCode}`, tempX.toString());
+                      localStorage.setItem(`transcom_avatar_y_${personalInfo.employeeCode}`, tempY.toString());
+                    }
+                    handleSaveProfile({
+                      avatarImage: tempImage,
+                      avatarScale: tempScale,
+                      avatarX: tempX,
+                      avatarY: tempY
+                    });
                     setIsEditModalOpen(false);
                   }}
                   disabled={!tempImage}

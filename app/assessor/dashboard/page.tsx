@@ -178,9 +178,6 @@ export default function AssessorDashboardPage() {
           </h1>
           <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Showroom Visit &amp; Audit Overview</p>
         </div>
-        <span className="text-[10px] font-extrabold text-red-600 bg-red-50 border border-red-100 px-2.5 py-0.5 rounded-full">
-          ASSESSOR
-        </span>
       </header>
 
       <main className="flex-1 max-w-md w-full mx-auto px-4 py-5 space-y-5">
