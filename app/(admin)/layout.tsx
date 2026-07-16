@@ -8,6 +8,7 @@ import AdminHeader from "../../components/admin/AdminHeader";
 const PAGE_META: Record<string, { title: string; breadcrumb: string }> = {
   "/admin":              { title: "Admin Overview",        breadcrumb: "Transcom LMS · Admin Portal" },
   "/admin/employees":    { title: "Employee Management",   breadcrumb: "Admin · Employees" },
+  "/admin/attendance":   { title: "Attendance & Geofencing", breadcrumb: "Admin · Attendance & Geofencing" },
   "/admin/assessments":  { title: "Assessment Management", breadcrumb: "Admin · Assessments" },
   "/admin/audits":       { title: "Showroom Audits",       breadcrumb: "Admin · Field Operations" },
   "/admin/reports":      { title: "Reports & Analytics",   breadcrumb: "Admin · Intelligence" },

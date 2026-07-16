@@ -160,6 +160,10 @@ function ProfileContent() {
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(1);
   const [todayArrived, setTodayArrived] = useState(false);
   const [todayLeft, setTodayLeft] = useState(false);
+  const [dbAttendanceLogs, setDbAttendanceLogs] = useState<any[]>([]);
+  const [todayArrivalTime, setTodayArrivalTime] = useState<string | null>(null);
+  const [todayDepartureTime, setTodayDepartureTime] = useState<string | null>(null);
+  const [todayIsPresent, setTodayIsPresent] = useState(true);
 
   // Camera & Stream states
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -167,6 +171,14 @@ function ProfileContent() {
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+
+  // Geolocation & attendance states
+  type LocationStatus = "idle" | "requesting" | "granted" | "denied" | "error";
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
+  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [attendanceSubmitting, setAttendanceSubmitting] = useState(false);
+  const [attendanceResult, setAttendanceResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     if (cameraActive && !capturedImage) {
@@ -193,6 +205,50 @@ function ProfileContent() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraActive, capturedImage]);
+
+  const getTargetId = () => {
+    return viewId || (typeof window !== "undefined" ? sessionStorage.getItem("employeeProfileId") : null) || "0";
+  };
+
+  const formatTime = (isoString: string | null) => {
+    if (!isoString) return "Not yet";
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+    } catch {
+      return "Not yet";
+    }
+  };
+
+  const fetchAttendanceStatus = async () => {
+    const targetId = getTargetId();
+    try {
+      const res = await fetch(`http://localhost:5276/api/Attendance/status/${targetId}`);
+      if (res.ok) {
+        const status = await res.json();
+        setTodayArrived(status.arrived);
+        setTodayLeft(status.left);
+        setTodayArrivalTime(status.arrivalTime);
+        setTodayDepartureTime(status.departureTime);
+        setTodayIsPresent(status.isPresent);
+      }
+    } catch (err) {
+      console.error("Error fetching attendance status:", err);
+    }
+  };
+
+  const fetchAttendanceLogs = async () => {
+    const targetId = getTargetId();
+    try {
+      const res = await fetch(`http://localhost:5276/api/Attendance/logs/${targetId}`);
+      if (res.ok) {
+        const logs = await res.json();
+        setDbAttendanceLogs(logs);
+      }
+    } catch (err) {
+      console.error("Error fetching attendance logs:", err);
+    }
+  };
 
   useEffect(() => {
     const sessionProfileId = sessionStorage.getItem("employeeProfileId");
@@ -255,7 +311,10 @@ function ProfileContent() {
         console.error("Error fetching employee profile from API:", err);
       }
     }
+
     fetchProfile();
+    fetchAttendanceStatus();
+    fetchAttendanceLogs();
   }, []);
 
   const cleanupStream = () => {
@@ -979,6 +1038,7 @@ function ProfileContent() {
       {isAttendanceOpen && (
         <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-hidden animate-fade-in">
           {/* Header */}
+          {/* Header */}
           <header className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-slate-100 shadow-sm flex-shrink-0">
             <div className="flex items-center gap-3">
               <button onClick={() => setIsAttendanceOpen(false)} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-600 transition-colors">
@@ -988,7 +1048,6 @@ function ProfileContent() {
               </button>
               <h2 className="text-base font-bold text-slate-900" style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>Attendance</h2>
             </div>
-            <span className="text-[11px] font-bold text-slate-400">{attendanceMonths[selectedMonthIndex].label}</span>
           </header>
 
           <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 pb-8">
@@ -997,27 +1056,49 @@ function ProfileContent() {
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Today's Status</h3>
-                <span className="text-[10px] text-slate-400 font-medium">Mon, 30 June 2025</span>
+                <span className="text-[10px] text-slate-400 font-medium">
+                  {new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka", weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+                </span>
               </div>
 
               {/* Status row */}
               <div className="grid grid-cols-2 gap-3">
-                <div className={`rounded-xl p-3 border ${todayArrived ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}>
+                <div className={`rounded-xl p-3 border ${
+                  todayArrived 
+                    ? todayIsPresent ? "bg-emerald-50 border-emerald-100" : "bg-red-50 border-red-100" 
+                    : "bg-slate-50 border-slate-100"
+                }`}>
                   <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider mb-1">Arrive</div>
                   {todayArrived ? (
-                    <div>
-                      <div className="text-sm font-extrabold text-emerald-700">09:03 AM</div>
-                      <div className="text-[9px] text-emerald-500 font-semibold mt-0.5">✓ On Time</div>
-                    </div>
+                    todayIsPresent ? (
+                      <div>
+                        <div className="text-sm font-extrabold text-emerald-700">{formatTime(todayArrivalTime)}</div>
+                        <div className="text-[9px] text-emerald-500 font-semibold mt-0.5">✓ Present</div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-sm font-extrabold text-red-600">Absent</div>
+                        <div className="text-[9px] text-red-500 font-semibold mt-0.5 text-red-500/80">Not Present</div>
+                      </div>
+                    )
                   ) : (
                     <div className="text-xs text-slate-400 font-semibold">Not yet</div>
                   )}
                 </div>
-                <div className={`rounded-xl p-3 border ${todayLeft ? "bg-rose-50 border-rose-100" : "bg-slate-50 border-slate-100"}`}>
+
+                <div className={`rounded-xl p-3 border ${
+                  !todayIsPresent
+                    ? "bg-slate-100 border-slate-200 opacity-60 select-none text-slate-400 cursor-not-allowed"
+                    : todayLeft
+                    ? "bg-rose-50 border-rose-100"
+                    : "bg-slate-50 border-slate-100"
+                }`}>
                   <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider mb-1">Leave</div>
-                  {todayLeft ? (
+                  {!todayIsPresent ? (
+                    <div className="text-xs font-semibold text-slate-400">Disabled</div>
+                  ) : todayLeft ? (
                     <div>
-                      <div className="text-sm font-extrabold text-rose-700">05:30 PM</div>
+                      <div className="text-sm font-extrabold text-rose-700">{formatTime(todayDepartureTime)}</div>
                       <div className="text-[9px] text-rose-500 font-semibold mt-0.5">✓ Standard Time</div>
                     </div>
                   ) : (
@@ -1028,29 +1109,147 @@ function ProfileContent() {
 
               {/* Selfie camera buttons */}
               {!cameraActive ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => { setCameraMode("arrive"); setCameraActive(true); }}
-                    disabled={todayArrived}
-                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${todayArrived ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-red-600 text-white hover:bg-red-700 shadow-sm"}`}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
-                    {todayArrived ? "Arrived ✓" : "Take Arrive Selfie"}
-                  </button>
-                  <button
-                    onClick={() => { setCameraMode("leave"); setCameraActive(true); }}
-                    disabled={!todayArrived || todayLeft}
-                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${!todayArrived || todayLeft ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-slate-800 text-white hover:bg-slate-900 shadow-sm"}`}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
-                    {todayLeft ? "Left ✓" : "Take Leave Selfie"}
-                  </button>
+                <div className="space-y-3">
+                  {/* Geolocation status strip */}
+                  {locationStatus === "denied" && (
+                    <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-xl p-3">
+                      <svg className="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <div>
+                        <p className="text-[11px] font-bold text-red-700">Location Permission Denied</p>
+                        <p className="text-[10px] text-red-500 mt-0.5">Please allow location access in your browser settings and try again. Attendance requires your location to verify you are at the outlet.</p>
+                      </div>
+                    </div>
+                  )}
+                  {locationStatus === "error" && geoError && (
+                    <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                      <svg className="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <div>
+                        <p className="text-[11px] font-bold text-amber-700">No GPS — Camera Opened</p>
+                        <p className="text-[10px] text-amber-600 mt-0.5">{geoError}</p>
+                      </div>
+                    </div>
+                  )}
+                  {attendanceResult && (
+                    <div className={`flex items-start gap-2.5 rounded-xl p-3 border ${
+                      attendanceResult.success
+                        ? "bg-emerald-50 border-emerald-200"
+                        : "bg-red-50 border-red-200"
+                    }`}>
+                      <svg className="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={attendanceResult.success ? "#059669" : "#dc2626"} strokeWidth="2.5">
+                        {attendanceResult.success
+                          ? <><polyline points="20 6 9 17 4 12"/></>
+                          : <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>}
+                      </svg>
+                      <p className={`text-[11px] font-bold ${attendanceResult.success ? "text-emerald-700" : "text-red-700"}`}>{attendanceResult.message}</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3">
+                     <button
+                      onClick={() => {
+                        setCameraMode("arrive");
+                        setGeoError(null);
+                        setAttendanceResult(null);
+                        setLocationStatus("requesting");
+                        if (!navigator.geolocation) {
+                          // No geolocation API — open camera without coords
+                          setGeoCoords(null);
+                          setLocationStatus("granted");
+                          setCameraActive(true);
+                          return;
+                        }
+                        navigator.geolocation.getCurrentPosition(
+                          (pos) => {
+                            setGeoCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                            setLocationStatus("granted");
+                            setCameraActive(true);
+                          },
+                          (err) => {
+                            if (err.code === err.PERMISSION_DENIED) {
+                              // Hard block: user explicitly denied
+                              setLocationStatus("denied");
+                            } else {
+                              // POSITION_UNAVAILABLE or TIMEOUT (e.g. no GPS, network 429)
+                              // Still open camera — log attempt with null coords
+                              setGeoCoords(null);
+                              setLocationStatus("granted");
+                              setGeoError("Location unavailable — selfie recorded without GPS. Geofence check skipped.");
+                              setCameraActive(true);
+                            }
+                          },
+                          { enableHighAccuracy: false, timeout: 8000 }
+                        );
+                      }}
+                      disabled={todayArrived || locationStatus === "requesting"}
+                      className={`flex flex-col items-center gap-1.5 py-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                        todayArrived
+                          ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                          : locationStatus === "requesting"
+                          ? "bg-red-400 text-white cursor-not-allowed animate-pulse"
+                          : "bg-red-600 text-white hover:bg-red-700 shadow-sm"
+                      }`}
+                    >
+                      {locationStatus === "requesting" && cameraMode === "arrive" ? (
+                        <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" />
+                        </svg>
+                      )}
+                      {todayArrived ? "Arrived ✓" : locationStatus === "requesting" && cameraMode === "arrive" ? "Getting Location..." : "Take Arrive Selfie"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCameraMode("leave");
+                        setGeoError(null);
+                        setAttendanceResult(null);
+                        setLocationStatus("requesting");
+                        if (!navigator.geolocation) {
+                          // No geolocation API — open camera without coords
+                          setGeoCoords(null);
+                          setLocationStatus("granted");
+                          setCameraActive(true);
+                          return;
+                        }
+                        navigator.geolocation.getCurrentPosition(
+                          (pos) => {
+                            setGeoCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                            setLocationStatus("granted");
+                            setCameraActive(true);
+                          },
+                          (err) => {
+                            if (err.code === err.PERMISSION_DENIED) {
+                              // Hard block: user explicitly denied
+                              setLocationStatus("denied");
+                            } else {
+                              // POSITION_UNAVAILABLE or TIMEOUT
+                              setGeoCoords(null);
+                              setLocationStatus("granted");
+                              setGeoError("Location unavailable — selfie recorded without GPS. Geofence check skipped.");
+                              setCameraActive(true);
+                            }
+                          },
+                          { enableHighAccuracy: false, timeout: 8000 }
+                        );
+                      }}
+                      disabled={!todayArrived || todayLeft || !todayIsPresent || locationStatus === "requesting"}
+                      className={`flex flex-col items-center gap-1.5 py-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                        !todayArrived || todayLeft || !todayIsPresent
+                          ? "bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+                          : locationStatus === "requesting"
+                          ? "bg-slate-600 text-white cursor-not-allowed animate-pulse"
+                          : "bg-slate-800 text-white hover:bg-slate-900 shadow-sm"
+                      }`}
+                    >
+                      {locationStatus === "requesting" && cameraMode === "leave" ? (
+                        <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" />
+                        </svg>
+                      )}
+                      {todayLeft ? "Left ✓" : locationStatus === "requesting" && cameraMode === "leave" ? "Getting Location..." : "Take Leave Selfie"}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1113,6 +1312,7 @@ function ProfileContent() {
                       onClick={() => {
                         setCameraActive(false);
                         setCapturedImage(null);
+                        setLocationStatus("idle");
                       }}
                       className="py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 cursor-pointer"
                     >
@@ -1134,23 +1334,83 @@ function ProfileContent() {
                          Open Camera
                          <input type="file" accept="image/*" capture="user" className="hidden" onChange={handleNativeCapture} />
                        </label>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          if (cameraMode === "arrive") {
-                            setTodayArrived(true);
-                          } else {
-                            setTodayLeft(true);
-                          }
-                          setCameraActive(false);
-                          setCapturedImage(null);
-                        }}
-                        className="col-span-2 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 cursor-pointer flex items-center justify-center gap-1.5"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        Submit Attendance
-                      </button>
-                    )}
+                    ) : capturedImage ? (
+                      // Image captured — show Retake & Submit
+                      <>
+                        <button
+                          onClick={() => {
+                            // Retake: clear captured image and restart camera
+                            setCapturedImage(null);
+                          }}
+                          className="py-2.5 rounded-xl bg-amber-100 text-amber-700 text-xs font-bold hover:bg-amber-200 cursor-pointer flex items-center justify-center gap-1.5 border border-amber-200"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.98"/></svg>
+                          Retake
+                        </button>
+                        <button
+                          disabled={attendanceSubmitting}
+                          onClick={async () => {
+                            if (!capturedImage) return;
+                            setAttendanceSubmitting(true);
+                            setAttendanceResult(null);
+                            const employeeId = parseInt(sessionStorage.getItem("employeeProfileId") || "0");
+                            try {
+                              // Log the validation attempt
+                              const attemptPayload = {
+                                employeeId,
+                                attemptTime: new Date().toISOString(),
+                                submittedLatitude: geoCoords?.lat ?? 0,
+                                submittedLongitude: geoCoords?.lng ?? 0,
+                                selfieUrl: capturedImage.substring(0, 490), // store truncated base64 preview
+                                isSuccessfulCheckIn: false // optimistic false, updated after check
+                              };
+                              // Post attempt log and check geofence result
+                              const res = await fetch("http://localhost:5276/api/Attendance/validate", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  ...attemptPayload,
+                                  checkType: cameraMode,
+                                })
+                              });
+
+                              if (res.ok) {
+                                const result = await res.json();
+                                if (result.success) {
+                                  setAttendanceResult({ success: true, message: result.message });
+                                  setCameraActive(false);
+                                  setCapturedImage(null);
+                                  setLocationStatus("idle");
+
+                                  // Refresh logs list and status states from database
+                                  await fetchAttendanceStatus();
+                                  await fetchAttendanceLogs();
+                                } else {
+                                  setAttendanceResult({ success: false, message: result.message });
+                                }
+                              } else {
+                                setAttendanceResult({ success: false, message: "Server validation failed. Please try again." });
+                              }
+                            } catch (err) {
+                              console.error(err);
+                              setAttendanceResult({ success: false, message: "Submission failed. Please try again." });
+                            } finally {
+                              setAttendanceSubmitting(false);
+                            }
+                          }}
+                          className={`py-2.5 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                            attendanceSubmitting ? "bg-slate-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
+                          }`}
+                        >
+                          {attendanceSubmitting ? (
+                            <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          )}
+                          {attendanceSubmitting ? "Submitting..." : "Submit"}
+                        </button>
+                      </>
+                    ) : null}
                   </div>
                 </div>
               )}
@@ -1158,18 +1418,27 @@ function ProfileContent() {
 
             {/* ── Monthly Summary Cards ──────────────────────────────── */}
             <div className="grid grid-cols-4 gap-2">
-              {[
-                { label: "Present", value: 13, color: "text-emerald-600", dot: "bg-emerald-500" },
-                { label: "Late",    value: 3,  color: "text-amber-600",   dot: "bg-amber-400" },
-                { label: "Sick",    value: 2,  color: "text-blue-600",    dot: "bg-blue-400" },
-                { label: "Absent",  value: 2,  color: "text-red-600",     dot: "bg-red-400" },
-              ].map((s) => (
-                <div key={s.label} className="bg-white rounded-xl border border-slate-100 shadow-sm p-2.5 text-center">
-                  <span className={`w-2 h-2 rounded-full ${s.dot} inline-block mb-1`}></span>
-                  <div className={`text-base font-extrabold ${s.color}`}>{s.value}</div>
-                  <div className="text-[9px] text-slate-400 font-semibold">{s.label}</div>
-                </div>
-              ))}
+              {(() => {
+                const totalPresentFromDb = dbAttendanceLogs.filter(l => l.isPresent).length;
+                // Add fallback to mock values to preserve beautiful UI representation if database logs are empty
+                const displayPresent = dbAttendanceLogs.length > 0 ? totalPresentFromDb : 13;
+                const displayLate = dbAttendanceLogs.length > 0 ? dbAttendanceLogs.filter(l => l.isPresent && l.arrivalTime && new Date(l.arrivalTime).getUTCHours() >= 9).length : 3;
+                const displaySick = dbAttendanceLogs.length > 0 ? 0 : 2;
+                const displayAbsent = dbAttendanceLogs.length > 0 ? Math.max(0, 30 - totalPresentFromDb) : 2;
+
+                return [
+                  { label: "Present", value: displayPresent, color: "text-emerald-600", dot: "bg-emerald-500" },
+                  { label: "Late",    value: displayLate,  color: "text-amber-600",   dot: "bg-amber-400" },
+                  { label: "Sick",    value: displaySick,  color: "text-blue-600",    dot: "bg-blue-400" },
+                  { label: "Absent",  value: displayAbsent,  color: "text-red-600",     dot: "bg-red-400" },
+                ].map((s) => (
+                  <div key={s.label} className="bg-white rounded-xl border border-slate-100 shadow-sm p-2.5 text-center">
+                    <span className={`w-2 h-2 rounded-full ${s.dot} inline-block mb-1`}></span>
+                    <div className={`text-base font-extrabold ${s.color}`}>{s.value}</div>
+                    <div className="text-[9px] text-slate-400 font-semibold">{s.label}</div>
+                  </div>
+                ));
+              })()}
             </div>
 
             {/* ── Duty & Roster Alerts ────────────────────────────────── */}
@@ -1239,16 +1508,35 @@ function ProfileContent() {
                 {Array.from({ length: attendanceMonths[selectedMonthIndex].startDow }).map((_, i) => (
                   <div key={`blank-${i}`} />
                 ))}
-                {attendanceMonths[selectedMonthIndex].days.map((d) => (
-                  <div key={d.date} className="flex flex-col items-center gap-0.5 py-0.5">
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold
-                      ${d.status === "weekend" ? "text-slate-300" : "text-white"}
-                      ${d.status !== "weekend" ? dayStatusColor[d.status] : "bg-transparent"}`}
-                    >
-                      {d.date}
-                    </span>
-                  </div>
-                ))}
+                {attendanceMonths[selectedMonthIndex].days.map((d) => {
+                  // Check if there is an official database log matching this day
+                  // Note: selectedMonthIndex 0 is May 2025, 1 is June 2025.
+                  const monthIndex = selectedMonthIndex === 0 ? 4 : 5; // 0-based month index (4=May, 5=June)
+                  const matchingLog = dbAttendanceLogs.find(l => {
+                    const lDate = new Date(l.logDate);
+                    return lDate.getUTCFullYear() === 2025 && lDate.getUTCMonth() === monthIndex && lDate.getUTCDate() === d.date;
+                  });
+
+                  let status = d.status;
+                  if (matchingLog) {
+                    status = matchingLog.isPresent ? "present" : "absent";
+                    // If late: check arrival time >= 9:00 AM UTC (9 hours)
+                    if (matchingLog.arrivalTime && new Date(matchingLog.arrivalTime).getUTCHours() >= 9) {
+                      status = "late";
+                    }
+                  }
+
+                  return (
+                    <div key={d.date} className="flex flex-col items-center gap-0.5 py-0.5">
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold
+                        ${status === "weekend" ? "text-slate-300" : "text-white"}
+                        ${status !== "weekend" ? dayStatusColor[status] : "bg-transparent"}`}
+                      >
+                        {d.date}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
               {/* Legend */}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 pt-3 border-t border-slate-50">

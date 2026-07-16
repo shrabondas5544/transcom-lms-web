@@ -46,19 +46,28 @@ export default function AdminDashboardPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selectedEmployee, setSelectedEmployee] = useState<any | null>(null);
-  
+
+  const [attendanceStats, setAttendanceStats] = useState<any[]>([]);
+
   const PAGE_SIZE = 10;
 
   useEffect(() => {
     fetchEmployees();
+    fetchAttendanceStats();
   }, []);
+
+  const fetchAttendanceStats = async () => {
+    try {
+      const res = await fetch("http://localhost:5276/api/Attendance/stats/all");
+      if (res.ok) setAttendanceStats(await res.json());
+    } catch {}
+  };
 
   const fetchEmployees = async () => {
     try {
       const res = await fetch("http://localhost:5276/api/EmployeeProfile?page=1&pageSize=10000");
       if (res.ok) {
         const data = await res.json();
-        // API returns paginated wrapper: { items: [...], totalCount, ... }
         setEmployees(Array.isArray(data) ? data : (data.items ?? []));
       }
     } catch (err) {
@@ -386,6 +395,7 @@ export default function AdminDashboardPage() {
                   <th className="px-5 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Employee Name</th>
                   <th className="px-5 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Designation</th>
                   <th className="px-5 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Outlet / Location</th>
+                  <th className="px-5 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider text-center">Attendance</th>
                   <th className="px-5 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider text-center">Account Created</th>
                 </tr>
               </thead>
@@ -421,6 +431,19 @@ export default function AdminDashboardPage() {
                     <td className="px-5 py-3.5 text-xs text-slate-600 font-medium">
                       {emp.locationOutlet}
                     </td>
+                    {/* Attendance column: shows attendance days ratio (e.g. 98/100) */}
+                    <td className="px-5 py-3.5 text-center">
+                      {(() => {
+                        const stat = attendanceStats.find(s => s.employeeId === emp.id);
+                        const presentCount = stat ? stat.presentCount : 0;
+                        const totalDays = 100; // static period as requested
+                        return (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                            {presentCount} / {totalDays}
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td className="px-5 py-3.5 flex items-center justify-center">
                       <CompletionRing percent={emp.completion} />
                     </td>
@@ -428,7 +451,7 @@ export default function AdminDashboardPage() {
                 ))}
                 {employees.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="text-center py-24">
+                    <td colSpan={6} className="text-center py-24">
                       <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
                         <div className="w-14 h-14 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center border border-slate-100 mb-4 shadow-inner">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -447,7 +470,7 @@ export default function AdminDashboardPage() {
                 )}
                 {employees.length > 0 && pageRows.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="text-center py-12 text-xs text-slate-400 italic">
+                    <td colSpan={6} className="text-center py-12 text-xs text-slate-400 italic">
                       No matching records found.
                     </td>
                   </tr>
@@ -486,7 +509,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Right Side: Dynamic Sidebar panel */}
-        <div className="xl:w-80 flex-shrink-0 space-y-4">
+        <div className="xl:w-80 flex-shrink-0 space-y-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 7rem)" }}>
           
           {/* Employee Detail Sidebar display on overview page */}
           {selectedEmployee ? (
@@ -648,6 +671,7 @@ export default function AdminDashboardPage() {
               </div>
             </>
           )}
+
         </div>
       </div>
     </div>
