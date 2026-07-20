@@ -16,6 +16,36 @@ interface FilterOptions {
 export default function AssessorDashboardPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [canTakeAssessment, setCanTakeAssessment] = useState(false);
+  const [canConductAudit, setCanConductAudit] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const profileId = sessionStorage.getItem("employeeProfileId");
+      if (profileId) {
+        fetch(`http://localhost:5276/api/EmployeeProfile/${profileId}`)
+          .then(res => {
+            if (res.ok) return res.json();
+            throw new Error("Failed to fetch profile");
+          })
+          .then(data => {
+            sessionStorage.setItem("employeeCanTakeAssessment", data.canTakeAssessment ? "true" : "false");
+            sessionStorage.setItem("employeeCanConductAudit", data.canConductAudit ? "true" : "false");
+            setCanTakeAssessment(!!data.canTakeAssessment);
+            setCanConductAudit(!!data.canConductAudit);
+          })
+          .catch(err => {
+            console.error("Error syncing assessor permissions:", err);
+            setCanTakeAssessment(sessionStorage.getItem("employeeCanTakeAssessment") === "true");
+            setCanConductAudit(sessionStorage.getItem("employeeCanConductAudit") === "true");
+          });
+      } else {
+        setCanTakeAssessment(sessionStorage.getItem("employeeCanTakeAssessment") === "true");
+        setCanConductAudit(sessionStorage.getItem("employeeCanConductAudit") === "true");
+      }
+    }
+  }, []);
+
   const [selectedDepartment, setSelectedDepartment] = useState("ALL");
   const [selectedDesignation, setSelectedDesignation] = useState("ALL");
   const [selectedLocation, setSelectedLocation] = useState("ALL");
@@ -180,7 +210,25 @@ export default function AssessorDashboardPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-md w-full mx-auto px-4 py-5 space-y-5">
+      <main className="flex-1 max-w-md w-full mx-auto px-4 py-5 flex flex-col justify-center">
+        {!canTakeAssessment && !canConductAudit ? (
+          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm text-center space-y-4 my-auto animate-fade-in">
+            <div className="w-16 h-16 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-200/60 shadow-inner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">No Active Roles Assigned</h3>
+              <p className="text-[11px] text-slate-400 mt-1.5 px-4 leading-relaxed font-medium">
+                Your assessor account is active, but you do not currently have permission to conduct peer assessments or showroom audits. Please contact your system administrator to unlock access.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-5 flex-1 flex flex-col">
 
         {/* Key Performance Indicators Grid */}
         <section className="grid grid-cols-3 gap-2">
@@ -385,6 +433,8 @@ export default function AssessorDashboardPage() {
             )}
           </div>
         </section>
+        </div>
+        )}
       </main>
 
       {/* Sliding Search Filters Drawer overlay */}
@@ -457,21 +507,6 @@ export default function AssessorDashboardPage() {
         </div>
       )}
 
-      {/* Nav footer */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-6 py-2.5 flex items-center justify-around shadow-lg md:max-w-md md:mx-auto md:rounded-t-2xl">
-        <Link href="/assessor/dashboard" className="flex flex-col items-center gap-0.5 text-red-600">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>
-          <span className="text-[9px] font-bold">Home</span>
-        </Link>
-        <Link href="/assessor/create-assessment" className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" /></svg>
-          <span className="text-[9px] font-semibold">New Audit</span>
-        </Link>
-        <Link href="/assessor/visit-assessment" className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-          <span className="text-[9px] font-semibold">Visit</span>
-        </Link>
-      </nav>
     </div>
   );
 }

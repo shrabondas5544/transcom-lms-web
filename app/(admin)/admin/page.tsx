@@ -95,6 +95,42 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleAssessorToggle = async (field: string, checked: boolean) => {
+    if (!selectedEmployee) return;
+
+    const updatedStatus = {
+      isAssessor: field === "isAssessor" ? checked : !!selectedEmployee.isAssessor,
+      canTakeAssessment: field === "canTakeAssessment" ? checked : !!selectedEmployee.canTakeAssessment,
+      canConductAudit: field === "canConductAudit" ? checked : !!selectedEmployee.canConductAudit,
+    };
+
+    if (field === "isAssessor" && !checked) {
+      updatedStatus.canTakeAssessment = false;
+      updatedStatus.canConductAudit = false;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:5276/api/EmployeeProfile/${selectedEmployee.id}/assessor-status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedStatus)
+      });
+      if (res.ok) {
+        setEmployees(prev => prev.map(emp => 
+          emp.id === selectedEmployee.id 
+            ? { ...emp, ...updatedStatus } 
+            : emp
+        ));
+        setSelectedEmployee((prev: any) => prev ? { ...prev, ...updatedStatus } : null);
+      } else {
+        alert("Failed to update assessor status.");
+      }
+    } catch (err) {
+      console.error("Error updating assessor status:", err);
+      alert("A network error occurred while updating assessor status.");
+    }
+  };
+
   const formatExcelDate = (val: any): string => {
     if (!val) return "";
     
@@ -609,6 +645,61 @@ export default function AdminDashboardPage() {
                       <span className="text-[9px] text-amber-600 font-medium">Pending NID & document upload</span>
                     </div>
                   </>
+                )}
+              </div>
+
+              {/* Assessor Configuration Toggles */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between text-left">
+                  <div>
+                    <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Assessor Role</span>
+                    <span className="text-[9px] text-slate-400 font-bold mt-0.5">Authorize assessor access</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedEmployee.isAssessor || false}
+                      onChange={(e) => handleAssessorToggle("isAssessor", e.target.checked)}
+                      className="sr-only peer" 
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#c21e25]"></div>
+                  </label>
+                </div>
+
+                {selectedEmployee.isAssessor && (
+                  <div className="pt-2 border-t border-slate-200 space-y-3 animate-fade-in text-left">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-500 block">Take Assessment</span>
+                        <span className="text-[9px] text-slate-400 font-bold">Unlocks Peer Evaluations</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedEmployee.canTakeAssessment || false}
+                          onChange={(e) => handleAssessorToggle("canTakeAssessment", e.target.checked)}
+                          className="sr-only peer" 
+                        />
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#c21e25]"></div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-500 block">Showroom Audit</span>
+                        <span className="text-[9px] text-slate-400 font-bold">Unlocks Visit Evaluations</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedEmployee.canConductAudit || false}
+                          onChange={(e) => handleAssessorToggle("canConductAudit", e.target.checked)}
+                          className="sr-only peer" 
+                        />
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#c21e25]"></div>
+                      </label>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

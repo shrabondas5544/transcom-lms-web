@@ -270,6 +270,16 @@ export default function EmployeeAuditDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAuditIndex, setSelectedAuditIndex] = useState<number>(0);
 
+  const [canTakeAssessment, setCanTakeAssessment] = useState(false);
+  const [canConductAudit, setCanConductAudit] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCanTakeAssessment(sessionStorage.getItem("employeeCanTakeAssessment") === "true");
+      setCanConductAudit(sessionStorage.getItem("employeeCanConductAudit") === "true");
+    }
+  }, []);
+
   const avatarData = useMemo(() => {
     if (!info?.employeeCode) return null;
     if (info.avatarImage) {
@@ -611,22 +621,6 @@ export default function EmployeeAuditDetailPage() {
         </div>
 
       </main>
-
-      {/* Nav Footer */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-6 py-2.5 flex items-center justify-around shadow-lg md:max-w-md md:mx-auto md:rounded-t-2xl">
-        <Link href="/assessor/dashboard" className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>
-          <span className="text-[9px] font-semibold">Home</span>
-        </Link>
-        <Link href="/assessor/create-assessment" className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" /></svg>
-          <span className="text-[9px] font-semibold">New Audit</span>
-        </Link>
-        <Link href="/assessor/visit-assessment" className="flex flex-col items-center gap-0.5 text-red-600">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-          <span className="text-[9px] font-bold">Visit</span>
-        </Link>
-      </nav>
     </div>
   );
 }

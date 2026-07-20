@@ -65,8 +65,15 @@ export default function SignInPage() {
         sessionStorage.setItem("employeeDesignation", data.designation || "");
         sessionStorage.setItem("employeeShowroom", data.showroom || "");
         sessionStorage.setItem("employeeIsVerified", data.isVerified ? "true" : "false");
+        sessionStorage.setItem("employeeIsAssessor", data.isAssessor ? "true" : "false");
+        sessionStorage.setItem("employeeCanTakeAssessment", data.canTakeAssessment ? "true" : "false");
+        sessionStorage.setItem("employeeCanConductAudit", data.canConductAudit ? "true" : "false");
         
-        router.push("/employee/profile");
+        if (data.isAssessor) {
+          router.push("/assessor/dashboard");
+        } else {
+          router.push("/employee/profile");
+        }
       } else {
         const errMsg = await res.text();
         alert(errMsg || "Invalid credentials. Please try again.");

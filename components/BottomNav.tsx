@@ -2,9 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const [canTakeAssessment, setCanTakeAssessment] = useState(false);
+  const [canConductAudit, setCanConductAudit] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCanTakeAssessment(sessionStorage.getItem("employeeCanTakeAssessment") === "true");
+      setCanConductAudit(sessionStorage.getItem("employeeCanConductAudit") === "true");
+    }
+  }, [pathname]);
 
   // Hide navigation on auth pages and the admin portal (which has its own sidebar layout)
   const isAuthPage = 
@@ -53,26 +63,29 @@ export default function BottomNav() {
         </svg>
       ),
     },
-    {
-      label: "Visit",
-      href: "/assessor/visit-assessment",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-          <circle cx="12" cy="10" r="3" />
-        </svg>
-      ),
-    },
-
-    {
-      label: "Assessment",
-      href: "/assessor/create-assessment",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-      ),
-    },
+    ...(canConductAudit ? [
+      {
+        label: "Visit",
+        href: "/assessor/visit-assessment",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        ),
+      }
+    ] : []),
+    ...(canTakeAssessment ? [
+      {
+        label: "Assessment",
+        href: "/assessor/create-assessment",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        ),
+      }
+    ] : []),
   ];
 
   const navItems = isAssessor ? assessorItems : employeeItems;
